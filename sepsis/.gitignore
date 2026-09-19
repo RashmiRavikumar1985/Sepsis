@@ -1,0 +1,73 @@
+# Large datasets - exclude completely
+/training/
+physionet2019/
+
+# Model files and large artifacts - exclude large files but keep configs
+/artifacts/*.pt
+/artifacts/*.pth
+/artifacts/*.pkl
+/artifacts/*.h5
+/artifacts/*.hdf5
+/artifacts/*.npy
+/artifacts/*.npz
+# Keep essential config files
+!/artifacts/preprocessing_config.json
+!/artifacts/splits.json
+
+# Model checkpoints and results
+/checkpoints/
+/experiments/*/best_model.pt
+/experiments/*/plots/*.png
+/experiments/results/*/best_model.pt
+
+# Images and diagrams
+/img/
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# Papers and documents
+/papers/
+*.pdf
+*.svg
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+/venv/
+/env/
+/.venv/
+/.env
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Other large files
+/re/
+re.zip
+/c__/
+sources/*.zip
+hackathon/sources/*.zip

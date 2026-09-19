@@ -1,0 +1,26 @@
+# PhysioNet dataset
+physionet2019/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+
+# Model/checkpoint files
+*.pth
+*.pt
+*.ckpt
+
+# Experiment outputs
+experiments/
+
+# Large generated files
+*.csv
+*.zip
+
+# IDE/editor files
+.vscode/
+.idea/
