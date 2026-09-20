@@ -2,13 +2,22 @@ import os
 import sys
 import json
 import torch
-import torch.nn as nn
 from torch.utils.data import DataLoader
-from sklearn.metrics import (average_precision_score, roc_auc_score, precision_score, 
-                             recall_score, f1_score, roc_curve, precision_recall_curve)
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
+from sklearn.metrics import (
+    average_precision_score,
+    roc_auc_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_curve,
+    precision_recall_curve
+)
+
+try:
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except Exception:
+    HAS_MATPLOTLIB = False
 
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
@@ -30,26 +39,7 @@ def evaluate_transformer():
     with open(splits_path, 'r') as f:
         splits = json.load(f)
         
-try:
-    import matplotlib.pyplot as plt
-    HAS_MATPLOTLIB = True
-except Exception:
-    HAS_MATPLOTLIB = False
-
-def evaluate_transformer():
-    print("=== Evaluating Temporal Transformer ===")
-    
-    config_path = os.path.join(os.path.dirname(__file__), "config.json")
-    with open(config_path, 'r') as f:
-        config = json.load(f)
-        
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
-    # Load Splits
-    splits_path = os.path.join(project_root, "artifacts", "splits.json")
-    with open(splits_path, 'r') as f:
-        splits = json.load(f)
-        
+    # Data directory paths - check actual structure
     cand_dirs_1 = [
         os.path.join(project_root, "physionet2019", "training", "training_setA"),
         os.path.join(project_root, "physionet2019", "training", "training_setB")
@@ -58,12 +48,27 @@ def evaluate_transformer():
         os.path.join(project_root, "training", "training_setA"),
         os.path.join(project_root, "training", "training_setB")
     ]
+    # Check parent directory structure (physionet2019 at same level as sepsis)
+    parent_root = os.path.dirname(project_root)
+    cand_dirs_3 = [
+        os.path.join(parent_root, "physionet2019", "training", "training_setA"),
+        os.path.join(parent_root, "physionet2019", "training", "training_setB")
+    ]
+    
     if os.path.exists(cand_dirs_1[0]):
         data_dirs = cand_dirs_1
     elif os.path.exists(cand_dirs_2[0]):
         data_dirs = cand_dirs_2
+    elif os.path.exists(cand_dirs_3[0]):
+        data_dirs = cand_dirs_3
     else:
-        raise FileNotFoundError("Could not locate training_setA and training_setB data directories.")
+        raise FileNotFoundError(
+            f"Could not locate training_setA and training_setB data directories.\n"
+            f"Checked:\n"
+            f"1. {cand_dirs_1[0]}\n"
+            f"2. {cand_dirs_2[0]}\n"
+            f"3. {cand_dirs_3[0]}"
+        )
 
     preprocess_cfg = os.path.join(project_root, "artifacts", "preprocessing_config.json")
     with open(preprocess_cfg, 'r') as f:
@@ -71,6 +76,25 @@ def evaluate_transformer():
 
     input_size = len(prep_config['dynamic_features'])
     static_size = len(prep_config['static_features'])
+    
+    # CRITICAL: Verify this is the Phase-3 35-feature baseline
+    assert input_size == 35, (
+        f"Expected 35 dynamic features for Phase-3 baseline, got {input_size}"
+    )
+    assert static_size == 5, (
+        f"Expected 5 static features, got {static_size}"
+    )
+    assert "ICULOS" in prep_config["dynamic_features"], (
+        "ICULOS must be present in the 35-feature Phase-3 baseline"
+    )
+    assert input_size * 3 == 105, (
+        f"Expected 105 Transformer input channels, got {input_size * 3}"
+    )
+    
+    print(f"Dynamic features: {input_size}")
+    print(f"Static features: {static_size}")
+    print(f"Transformer input channels: {input_size * 3}")
+    print("ICULOS: present")
     
     test_ids = splits['test']
     
@@ -87,6 +111,7 @@ def evaluate_transformer():
         dropout=config['dropout']
     ).to(device)
     
+    # CRITICAL: DO NOT evaluate untrained model
     results_dir = os.path.join(project_root, "experiments", "results", "transformer")
     artifacts_dir = os.path.join(project_root, "artifacts")
     model_path = os.path.join(artifacts_dir, "baseline_transformer.pt")
@@ -95,22 +120,59 @@ def evaluate_transformer():
     
     if os.path.exists(model_path):
         checkpoint = torch.load(model_path, map_location=device)
+        
+        # Verify checkpoint compatibility
         if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
+            checkpoint_input_size = checkpoint.get("input_size")
+            checkpoint_static_size = checkpoint.get("static_size") 
+            checkpoint_input_channels = checkpoint.get("input_channels")
+            
+            if checkpoint_input_size is not None:
+                assert checkpoint_input_size == input_size, (
+                    f"Checkpoint input_size={checkpoint_input_size}, "
+                    f"current input_size={input_size}"
+                )
+            
+            if checkpoint_static_size is not None:
+                assert checkpoint_static_size == static_size, (
+                    f"Checkpoint static_size={checkpoint_static_size}, "
+                    f"current static_size={static_size}"
+                )
+            
+            if checkpoint_input_channels is not None:
+                assert checkpoint_input_channels == input_size * 3, (
+                    f"Checkpoint input_channels={checkpoint_input_channels}, "
+                    f"current={input_size * 3}"
+                )
+            
             model.load_state_dict(checkpoint["model_state_dict"])
         else:
             model.load_state_dict(checkpoint)
         print(f"Loaded trained Transformer checkpoint from {model_path}")
     else:
-        print("Warning: Trained checkpoint not found. Evaluating randomly initialized model.")
+        raise FileNotFoundError(
+            f"Trained Transformer checkpoint not found. "
+            f"Checked:\n{artifacts_dir}\n{results_dir}\n"
+            f"Cannot evaluate untrained model - this would generate meaningless metrics."
+        )
         
     model.eval()
     all_preds = []
     all_labels = []
+    
     with torch.no_grad():
         for values, mask, delta, static_features, labels, valid_mask in test_loader:
-            values, mask = values.to(device), mask.to(device)
-            delta, static_features = delta.to(device), static_features.to(device)
-            labels, valid_mask = labels.to(device), valid_mask.to(device)
+            # CRITICAL: Verify valid_mask dtype
+            assert valid_mask.dtype == torch.bool, (
+                f"Expected valid_mask to be bool, got {valid_mask.dtype}"
+            )
+            
+            values = values.to(device)
+            mask = mask.to(device)
+            delta = delta.to(device)
+            static_features = static_features.to(device)
+            labels = labels.to(device)
+            valid_mask = valid_mask.to(device)
             
             logits = model(values, mask, delta, static_features, valid_mask=valid_mask)
             probs = torch.sigmoid(logits)
@@ -123,24 +185,36 @@ def evaluate_transformer():
     auprc = average_precision_score(all_labels, all_preds)
     auroc = roc_auc_score(all_labels, all_preds)
     
-    # Binarize predictions at 0.5 for F1
+    # Binarize predictions at 0.5 for secondary metrics
     bin_preds = [1 if p >= 0.5 else 0 for p in all_preds]
     precision = precision_score(all_labels, bin_preds, zero_division=0)
     recall = recall_score(all_labels, bin_preds, zero_division=0)
     f1 = f1_score(all_labels, bin_preds, zero_division=0)
     
+    # Save comprehensive metrics with metadata
     metrics = {
+        "model": "TemporalTransformer",
+        "experiment": "Phase-3 35-feature baseline",
+        "dynamic_features": input_size,
+        "static_features": static_size,
+        "input_channels": input_size * 3,
+        "iculos_included": "ICULOS" in prep_config["dynamic_features"],
+        "test_patients": len(test_ids),
+        "test_valid_timesteps": len(all_labels),
+        
         "Test AUPRC": auprc,
         "Test AUROC": auroc,
-        "Test Precision": precision,
-        "Test Recall": recall,
-        "Test F1": f1
+        "Test Precision @ 0.5": precision,
+        "Test Recall @ 0.5": recall,
+        "Test F1 @ 0.5": f1
     }
     
+    os.makedirs(results_dir, exist_ok=True)
     with open(os.path.join(results_dir, "metrics.json"), 'w') as f:
         json.dump(metrics, f, indent=4)
         
     print(f"Test AUPRC: {auprc:.4f} | Test AUROC: {auroc:.4f}")
+    print(f"Test Patients: {len(test_ids)} | Valid Timesteps: {len(all_labels)}")
     
     # Plots
     if HAS_MATPLOTLIB:
