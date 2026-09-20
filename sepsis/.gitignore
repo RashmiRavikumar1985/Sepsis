@@ -14,11 +14,12 @@ physionet2019/
 !/artifacts/preprocessing_config.json
 !/artifacts/splits.json
 
-# Model checkpoints and results
+# Model checkpoints and results - be specific
 /checkpoints/
-/experiments/*/best_model.pt
-/experiments/*/plots/*.png
 /experiments/results/*/best_model.pt
+/experiments/*/plots/*.png
+/experiments/*/*.pt
+/experiments/*/*.pth
 
 # Images and diagrams
 /img/
