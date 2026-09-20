@@ -1,0 +1,13 @@
+{
+    "Level 1: Patient": {
+        "total_patients": 40336,
+        "positive_patients": 2932,
+        "negative_patients": 37404,
+        "positive_percentage": 7.268940896469656,
+        "negative_percentage": 92.73105910353034,
+        "positive_negative_ratio": 0.07838733825259331,
+        "imbalance_ratio": 12.757162346521145
+    },
+    "Level 2: Timestep": {
+        "total_timesteps": 1552210,
+        "positive_timesteps": 

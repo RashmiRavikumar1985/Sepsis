@@ -1,0 +1,18 @@
+{
+    "total_samples": 1552210.0,
+    "positive_samples": 27916.0,
+    "negative_samples": 1524294.0,
+    "positive_ratio": 0.01798467990800214,
+    "negative_ratio": 0.9820153200919979,
+    "pos_weight": 54.602880068777765,
+    "patient_positive_count": 2932,
+    "patient_negative_count": 37404,
+    "imbalance_ratio": 54.602880068777765,
+    "positive_to_negative_ratio": 0.018314052276004498,
+    "negative_to_positive_ratio": 54.602880068777765,
+    "recommended_loss_strategy": "BCEWithLogitsLoss with pos_weight",
+    "recommended_metrics": [
+        "AUPRC",
+        "AUROC"
+    ]
+}
