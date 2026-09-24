@@ -1,0 +1,18 @@
+{
+    "d_model": 128,
+    "n_heads": 4,
+    "num_layers": 2,
+    "dim_feedforward": 256,
+    "dropout": 0.20,
+    "max_sequence_length": 336,
+    "learning_rate": 3e-4,
+    "batch_size": 32,
+    "epochs": 30,
+    "patience": 7,
+    "weight_decay": 1e-4,
+    "seed": 42,
+    "optimizer": "AdamW",
+    "use_scheduler": true,
+    "scheduler_factor": 0.5,
+    "scheduler_patience": 2
+}

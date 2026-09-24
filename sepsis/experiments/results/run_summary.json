@@ -1,0 +1,32 @@
+{
+    "Transformer Training": {
+        "status": "SUCCESS",
+        "runtime": 36.90544581413269,
+        "error": null
+    },
+    "Transformer Evaluation": {
+        "status": "SUCCESS",
+        "runtime": 11.91153883934021,
+        "error": null
+    },
+    "GAT Graph Construction": {
+        "status": "SUCCESS",
+        "runtime": 29.137800455093384,
+        "error": null
+    },
+    "GAT Training": {
+        "status": "SUCCESS",
+        "runtime": 131.91825079917908,
+        "error": null
+    },
+    "GAT Evaluation": {
+        "status": "SUCCESS",
+        "runtime": 15.000351428985596,
+        "error": null
+    },
+    "Baseline Evaluation": {
+        "status": "SUCCESS",
+        "runtime": 0.09508776664733887,
+        "error": null
+    }
+}

@@ -1,0 +1,62 @@
+# ============================================================
+# RAW DATASET — 40,336 PSV patient files (too large for git)
+# ============================================================
+physionet2019/training/
+*.psv
+
+# ============================================================
+# PHYSIONET COMPETITION SOURCE ZIPS — not our code
+# ============================================================
+physionet2019/sources/
+physionet2019/hackathon/
+
+# ============================================================
+# Python cache
+# ============================================================
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# ============================================================
+# Virtual environments
+# ============================================================
+.env
+.venv
+env/
+venv/
+
+# ============================================================
+# OS / IDE
+# ============================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ============================================================
+# Jupyter
+# ============================================================
+.ipynb_checkpoints/
+*.ipynb
+
+# ============================================================
+# Logs
+# ============================================================
+*.log
+
+# ============================================================
+# INCLUDE EVERYTHING ELSE:
+# - sepsis/experiments/ (all code AND results)
+# - sepsis/src/ (all model code)
+# - sepsis/artifacts/ (preprocessing config, splits, metrics)
+# - artifacts/ (root-level checkpoints and metrics)
+# - experiments/ (root-level results)
+# - *.pt (model checkpoints)
+# - *.json (metrics, configs)
+# - *.csv (EDA results)
+# - *.png (plots)
+# - *.md (STATUS.md, docs)
+# - *.py (all code)
+# - *.pdf (implementation plan)
+# ============================================================

@@ -1,0 +1,20 @@
+{
+    "model": "Transformer Tuned (35-Feature)",
+    "input_features": 35,
+    "static_features": 5,
+    "input_channels": 105,
+    "includes_iculos": true,
+    "iculos_index": 34,
+    "best_epoch": 13,
+    "best_val_auprc": 0.09524734534846287,
+    "best_val_auroc": 0.8185711969954851,
+    "test_loss": 1.292065884900326,
+    "test_auprc": 0.11197390838824585,
+    "test_auroc": 0.8304952385609913,
+    "pos_weight": 54.543762781183304,
+    "seed": 42,
+    "d_model": 128,
+    "optimizer": "AdamW",
+    "scheduler": true,
+    "config_source": "preprocessing_config.json for data schema, config_tuned.json for hyperparams"
+}
