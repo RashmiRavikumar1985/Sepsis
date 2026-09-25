@@ -1,0 +1,22 @@
+{
+  "hidden_dim": 64,
+  "out_dim": 64,
+  "num_heads": 2,
+  "num_gat_layers": 2,
+  "dropout": 0.3,
+  "batch_size": 32,
+  "max_seq_len": 72,
+  "epochs": 30,
+  "patience": 5,
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "seed": 42,
+  "add_self_loops": true,
+  "model": "TemporalGAT",
+  "version": "GAT-2",
+  "num_features": 35,
+  "static_size": 5,
+  "pos_weight": 54.543762781183304,
+  "n_params": 40898,
+  "device": "mps"
+}

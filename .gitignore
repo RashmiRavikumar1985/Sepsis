@@ -27,11 +27,20 @@ sepsis/experiments/**/plots/
 sepsis/experiments/**/plots_temporal/
 # Ignore generated results (metrics, CSVs from results dirs)
 sepsis/experiments/results/
+# But DO track final metrics and comparison files (un-negate specific files)
+!sepsis/experiments/results/
+!sepsis/experiments/results/**/
+!sepsis/experiments/results/**/metrics.json
+!sepsis/experiments/results/**/run_config.json
+!sepsis/experiments/results/run_summary.json
+!sepsis/experiments/results/comparison/
+!sepsis/experiments/results/comparison/model_comparison.csv
+!sepsis/experiments/results/comparison/model_comparison.md
 # Allow everything else in experiments/ (*.py, *.json, *.csv source files, *.md)
 
 # Large generated files (keep source CSVs like edges.csv, nodes.csv)
 *.zip
-sepsis/experiments/results/**/*.csv
+# (results CSVs are handled by negations above — only model_comparison is kept)
 
 # IDE/editor files
 .vscode/

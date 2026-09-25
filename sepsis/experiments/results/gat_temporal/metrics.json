@@ -1,0 +1,8 @@
+{
+    "model": "GAT-2 (TemporalGAT)",
+    "Test AUPRC": 0.08480022346521128,
+    "Test AUROC": 0.804119700890757,
+    "Test Precision": 0.05466294783155248,
+    "Test Recall": 0.6635670004768717,
+    "Test F1": 0.10100533517221355
+}
