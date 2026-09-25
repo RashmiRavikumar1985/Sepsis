@@ -28,5 +28,13 @@
         "status": "SUCCESS",
         "runtime": 0.09508776664733887,
         "error": null
+    },
+    "GAT-2 Evaluation": {
+        "status": "SUCCESS",
+        "model": "GAT-2 (Temporal GAT)",
+        "Test AUROC": 0.804119700890757,
+        "Test AUPRC": 0.08480022346521128,
+        "Test F1": 0.10100533517221355,
+        "note": "Dense temporal GAT, clinical+temporal edges, max_seq_len=72"
     }
 }

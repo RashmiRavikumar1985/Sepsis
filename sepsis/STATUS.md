@@ -40,17 +40,22 @@ This repository now includes a robust baseline for early sepsis prediction using
 | Model | File | Status | Executable | Trained | Evaluated |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **GRU-D** | `src/model_grud.py` | COMPLETED | YES | YES | YES |
-| **Transformer** | `experiments/transformer/model.py` | COMPLETED | YES | SMOKE TEST | YES |
-| **GAT Baseline** | `experiments/gat/model.py` | COMPLETED | YES | PENDING PyG | NO |
+| **Transformer** | `experiments/transformer/model.py` | COMPLETED | YES | YES | YES |
+| **GAT-0 (Static)** | `experiments/gat/model.py` | COMPLETED | YES | YES | YES |
+| **GAT-2 (Temporal GAT)** | `experiments/gat/temporal_model.py` | COMPLETED | YES | YES | YES |
 | **Medical KG** | N/A | MISSING | NO | NO | NO |
 
 ## 5. Performance Comparison
 
-| Model | Status | Test AUPRC | Test AUROC | Notes |
-| :--- | :--- | :--- | :--- | :--- |
-| **GRU-D** | Verified | 0.1124 | 0.8435 | Strong Baseline (Full Dataset) |
-| **Transformer** | Verified & Fixed | 0.3649 | 0.9463 | Causal mask + padding mask + LayerNorm/GELU fixed |
-| **GAT** | Verified & Fixed | 0.0712 | 0.7112 | CPU subset truncation removed, seed fix added |
+> ⚠️ Transformer 0.3649 AUPRC used future label leakage — **disqualified**. Valid causal baselines: 0.10–0.11 band.
+
+| # | Model | Test AUPRC | Test AUROC | Test F1 | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | **GRU-D** | **0.1125** | **0.8436** | — | Best overall |
+| 2 | **Transformer 64-d (causal)** | 0.1047 | 0.8325 | — | Corrected causal mask |
+| 3 | **GAT-2 (Temporal GAT)** | **0.0848** | **0.8041** | 0.1010 | Dense temporal GAT, max_seq_len=72, beats GAT-0 by +19% AUPRC |
+| 4 | **GAT-0 (Static Correlation)** | 0.0712 | 0.7112 | 0.1124 | Provisional correlation graph |
+| — | ~~Transformer (non-causal)~~ | ~~0.3649~~ | ~~0.9463~~ | — | ⚠ Future leakage — invalid |
 
 ## 6. FedSepsis-KG Component Status
 
@@ -60,7 +65,8 @@ This repository now includes a robust baseline for early sepsis prediction using
 | **EDA Pipeline** | [COMPLETED] | `experiments/eda/` | Analyze output distributions |
 | **GRU-D Baseline** | [COMPLETED] | `train_grud.py` | None |
 | **Temporal Transformer** | [COMPLETED & FIXED] | `experiments/transformer/` | Full dataset GPU training |
-| **Provisional Graph (GAT)** | [COMPLETED & FIXED] | `experiments/gat/` | Full dataset training |
+| **GAT-0 (Static Correlation)** | [COMPLETED] | `experiments/gat/` | None — superseded by GAT-2 |
+| **GAT-2 (Temporal GAT)** | [COMPLETED] | `experiments/gat/temporal_model.py` | Improve with medical KG edges |
 | **Common Evaluator** | [COMPLETED] | `src/evaluator.py` | Standardized evaluation metric |
 | **Knowledge Graph** | [NOT IMPLEMENTED] | No files found | Design SNOMED CT extraction |
 | **Federated Learning (FL)** | [NOT IMPLEMENTED] | No files found | Write Flower FL simulation |
@@ -70,8 +76,8 @@ This repository now includes a robust baseline for early sepsis prediction using
 *   **Phase 1 & 2 (Dataset, Preproc, EDA):** 100%
 *   **Phase 3 (Baselines):** 100%
 *   **Phase 4 (Transformer):** 100%
-*   **Phase 5 (GAT / Provisional Graph):** 100%
+*   **Phase 5 (GAT / Temporal GAT — GAT-2):** 100%  ← GAT-2 AUROC=0.8041 / AUPRC=0.0848
 *   **Phase 6 (True Medical KG & Fusion):** 0%
 *   **Phase 7 (Federated Learning):** 0%
 
-**OVERALL PROJECT PROGRESS:** 50%
+**OVERALL PROJECT PROGRESS:** 55%
