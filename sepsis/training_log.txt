@@ -43,3 +43,49 @@ Traceback (most recent call last):
     ):
     ^
 NotImplementedError: The operator 'aten::_nested_tensor_from_mask_left_aligned' is not currently implemented for the MPS device. If you want this op to be considered for addition please comment on https://github.com/pytorch/pytorch/issues/141287 and mention use-case, that resulted in missing op as well as commit hash 08187d9e0fba026dc8217405802ab5381dc88d90. As a temporary fix, you can set the environment variable `PYTORCH_ENABLE_MPS_FALLBACK=1` to use the CPU as a fallback for this op. WARNING: this will be slower than running natively on MPS.
+
+================================================================================
+GAT-2 (Temporal GAT) — Training & Evaluation Log
+Date: 2026-09-25 10:31:59
+================================================================================
+
+Model Architecture:
+  Type         : TemporalGAT (Dense, device-agnostic)
+  hidden_dim   : 64
+  out_dim      : 64
+  num_heads    : 2
+  num_gat_layers: 2
+  dropout      : 0.3
+  parameters   : 40,898
+
+Training Config:
+  max_seq_len  : 72h
+  batch_size   : 32
+  epochs       : 30 (early stopping, patience=5)
+  learning_rate: 0.001
+  weight_decay : 0.0001
+  device       : mps
+  seed         : 42
+
+Graph Design:
+  Clinical edges per timestep : 244 (Pearson |r| > 0.2, training patients only)
+  Temporal edges per timestep : 35  (feature f at t-1 -> feature f at t)
+  Self-loops                  : yes
+  Anti-leakage enforced       : source_t <= dest_t for all edges
+  No torch_geometric dependency (pure PyTorch dense matmul)
+
+Test Set Results (N=6,051 patients):
+  Test AUPRC   : 0.0848
+  Test AUROC   : 0.8041
+  Test F1      : 0.1010
+  Test Precision: 0.0547
+  Test Recall  : 0.6636
+
+Comparison vs Baselines:
+  GRU-D baseline       AUPRC=0.1125  AUROC=0.8436
+  Transformer 64-d     AUPRC=0.1047  AUROC=0.8325
+  GAT-2 (this model)   AUPRC=0.0848  AUROC=0.8041  (+19% AUPRC vs GAT-0)
+  GAT-0 (static)       AUPRC=0.0712  AUROC=0.7112
+
+Saved model : experiments/results/gat_temporal/best_model.pt
+================================================================================
