@@ -14,12 +14,24 @@ venv/
 *.pt
 *.ckpt
 
-# Experiment outputs
-experiments/
+# Experiment outputs — track source files, ignore generated artifacts
+# Ignore compiled cache inside experiments
+sepsis/experiments/**/__pycache__/
+sepsis/experiments/**/*.pyc
+# Ignore model checkpoints inside experiments
+sepsis/experiments/**/*.pt
+sepsis/experiments/**/*.pth
+sepsis/experiments/**/*.ckpt
+# Ignore plot images
+sepsis/experiments/**/plots/
+sepsis/experiments/**/plots_temporal/
+# Ignore generated results (metrics, CSVs from results dirs)
+sepsis/experiments/results/
+# Allow everything else in experiments/ (*.py, *.json, *.csv source files, *.md)
 
-# Large generated files
-*.csv
+# Large generated files (keep source CSVs like edges.csv, nodes.csv)
 *.zip
+sepsis/experiments/results/**/*.csv
 
 # IDE/editor files
 .vscode/
