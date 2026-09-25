@@ -1,0 +1,11 @@
+{
+    "model": "GAT-2 (TemporalGAT, seq_len=72h)",
+    "run_name": "gat_temporal",
+    "split": "val",
+    "seq_len": 72,
+    "Val AUPRC": 0.047423438440433875,
+    "Val AUROC": 0.7380438153717346,
+    "Val Precision": 0.03812951450934991,
+    "Val Recall": 0.4820235443843462,
+    "Val F1": 0.07066890568150014
+}

@@ -2,10 +2,15 @@
 train_temporal.py  -  GAT-2 (Temporal GAT) Training  [DENSE / FAST]
 
 Usage:
-    python experiments/gat/train_temporal.py              # auto-detect device
+    python experiments/gat/train_temporal.py                         # default (72h)
     python experiments/gat/train_temporal.py --device cpu
     python experiments/gat/train_temporal.py --device mps
-    python experiments/gat/train_temporal.py --device cuda
+    python experiments/gat/train_temporal.py --seq-len 120           # try 120h, isolated dir
+    python experiments/gat/train_temporal.py --seq-len 120 --run-name gat2_120h
+
+--run-name controls the output directory so existing results are NEVER overwritten:
+    results dir : experiments/results/<run-name>/
+    plots dir   : experiments/gat/plots_<run-name>/
 
 Speed design:
   - Dense 35x35 clinical GAT (matmul, no scatter) — fast on ANY device
@@ -93,16 +98,21 @@ def evaluate_epoch(model, loader, criterion, device):
     return avg_loss, auroc, auprc
 
 
-def train_temporal_gat(device_choice="auto"):
+def train_temporal_gat(device_choice="auto", seq_len=None, run_name=None):
     print("="*65); print("  GAT-2: Temporal GAT — Training  [DENSE / FAST]"); print("="*65)
 
     sepsis_root   = project_root
     prep_cfg_path = os.path.join(sepsis_root,"artifacts","preprocessing_config.json")
     splits_path   = os.path.join(sepsis_root,"artifacts","splits.json")
     edges_csv     = os.path.join(sepsis_root,"experiments","gat","edges.csv")
-    results_dir   = os.path.join(sepsis_root,"experiments","results","gat_temporal")
-    plots_dir     = os.path.join(sepsis_root,"experiments","gat","plots_temporal")
+
+    # run_name isolates results so existing runs are never overwritten
+    _run = run_name if run_name else "gat_temporal"
+    results_dir = os.path.join(sepsis_root,"experiments","results",_run)
+    plots_dir   = os.path.join(sepsis_root,"experiments","gat",f"plots_{_run}")
     os.makedirs(results_dir,exist_ok=True); os.makedirs(plots_dir,exist_ok=True)
+    print(f"Run name     : {_run}")
+    print(f"Results dir  : {results_dir}")
 
     with open(prep_cfg_path) as f: prep_cfg=json.load(f)
     with open(splits_path)   as f: splits=json.load(f)
@@ -110,7 +120,10 @@ def train_temporal_gat(device_choice="auto"):
     F=len(prep_cfg["dynamic_features"]); S=len(prep_cfg["static_features"])
     assert F==35 and S==5 and "ICULOS" in prep_cfg["dynamic_features"]
     pos_weight=prep_cfg.get("class_weight",54.54)
-    cfg=GAT2_CONFIG.copy(); max_seq_len=cfg["max_seq_len"]
+    cfg=GAT2_CONFIG.copy()
+    if seq_len is not None:
+        cfg["max_seq_len"] = int(seq_len)   # CLI override
+    max_seq_len=cfg["max_seq_len"]
     set_seed(cfg["seed"])
 
     device=pick_device(device_choice)
@@ -218,8 +231,13 @@ def train_temporal_gat(device_choice="auto"):
 
 if __name__=="__main__":
     parser=argparse.ArgumentParser()
-    parser.add_argument("--device",default="auto",
+    parser.add_argument("--device", default="auto",
                         choices=["auto","cpu","mps","cuda"],
                         help="Device to train on (default: auto-detect best)")
+    parser.add_argument("--seq-len", type=int, default=None,
+                        help="Override max_seq_len (e.g. 120 or 168). Default: use config (72).")
+    parser.add_argument("--run-name", type=str, default=None,
+                        help="Name for this run's output directory. Default: gat_temporal.\n"
+                             "E.g. --run-name gat2_120h  saves to experiments/results/gat2_120h/")
     args=parser.parse_args()
-    train_temporal_gat(args.device)
+    train_temporal_gat(args.device, args.seq_len, args.run_name)

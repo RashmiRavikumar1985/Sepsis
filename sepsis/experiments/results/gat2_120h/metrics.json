@@ -1,0 +1,10 @@
+{
+    "model": "GAT-2 (TemporalGAT, seq_len=120h)",
+    "run_name": "gat2_120h",
+    "seq_len": 120,
+    "Test AUPRC": 0.07060899468155335,
+    "Test AUROC": 0.7764048229053674,
+    "Test Precision": 0.04778625954198473,
+    "Test Recall": 0.6019230769230769,
+    "Test F1": 0.08854314002828854
+}

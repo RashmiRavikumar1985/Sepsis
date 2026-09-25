@@ -2,15 +2,25 @@
 evaluate_temporal.py  -  GAT-2 (Temporal GAT) Evaluation Script
 ================================================================
 
-Evaluates the best saved TemporalGAT model on the test split.
-Preserves identical evaluation methodology as GAT-1 and Transformer.
+Evaluates a saved TemporalGAT checkpoint on the test split.
+
+Usage examples:
+  # Default (evaluates gat_temporal/best_model.pt at 72h):
+  python experiments/gat/evaluate_temporal.py
+
+  # Evaluate the 120h run:
+  python experiments/gat/evaluate_temporal.py \
+      --model-path experiments/results/gat2_120h/best_model.pt \
+      --seq-len 120 \
+      --results-dir experiments/results/gat2_120h
 
 Saves:
-  experiments/results/gat_temporal/metrics.json
-  experiments/gat/plots_temporal/pr_curve.png
-  experiments/gat/plots_temporal/roc_curve.png
+  <results-dir>/metrics.json
+  experiments/gat/plots_<run_name>/pr_curve.png
+  experiments/gat/plots_<run_name>/roc_curve.png
 """
 
+import argparse
 import os
 import sys
 import json
@@ -34,27 +44,51 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 sys.path.insert(0, project_root)
 
 from src.dataset_grud import PhysioNetDatasetGRUD, collate_fn
-from experiments.gat.temporal_graph_builder import (
-    load_clinical_edges, build_batched_temporal_edge_index,
-)
+from experiments.gat.temporal_graph_builder import load_clinical_edges
 from experiments.gat.temporal_model import TemporalGAT
 from experiments.gat.train_temporal import find_data_dirs, GAT2_CONFIG
 
 
-def evaluate_temporal_gat():
+def evaluate_temporal_gat(model_path=None, seq_len=None, results_dir=None, plots_dir=None, split="test"):
     print("=" * 65)
-    print("  GAT-2: Temporal GAT — Evaluation on Test Split")
+    print(f"  GAT-2: Temporal GAT — Evaluation on {split.upper()} Split")
     print("=" * 65)
 
     sepsis_root   = project_root
     prep_cfg_path = os.path.join(sepsis_root, "artifacts", "preprocessing_config.json")
     splits_path   = os.path.join(sepsis_root, "artifacts", "splits.json")
     edges_csv     = os.path.join(sepsis_root, "experiments", "gat", "edges.csv")
-    results_dir   = os.path.join(sepsis_root, "experiments", "results", "gat_temporal")
-    plots_dir     = os.path.join(sepsis_root, "experiments", "gat", "plots_temporal")
-    model_path    = os.path.join(results_dir, "best_model.pt")
+
+    # ── Resolve paths: CLI args take priority over defaults ──
+    default_results = os.path.join(sepsis_root, "experiments", "results", "gat_temporal")
+    results_dir = results_dir or default_results
+    model_path  = model_path  or os.path.join(results_dir, "best_model.pt")
+
+    # Derive plots subdir from results_dir basename (e.g. gat2_120h -> plots_gat2_120h)
+    run_name  = os.path.basename(os.path.normpath(results_dir))
+    plots_dir = plots_dir or os.path.join(
+        sepsis_root, "experiments", "gat", f"plots_{run_name}"
+    )
+
     os.makedirs(results_dir, exist_ok=True)
     os.makedirs(plots_dir,   exist_ok=True)
+
+    print(f"Model path   : {model_path}")
+    print(f"Results dir  : {results_dir}")
+    print(f"Plots dir    : {plots_dir}")
+
+    # ── Auto-detect seq_len from run_config.json if not supplied ──
+    run_cfg_path = os.path.join(results_dir, "run_config.json")
+    if seq_len is None and os.path.exists(run_cfg_path):
+        with open(run_cfg_path) as f:
+            run_cfg = json.load(f)
+        seq_len = run_cfg.get("max_seq_len", GAT2_CONFIG["max_seq_len"])
+        print(f"seq_len      : {seq_len}h  (from run_config.json)")
+    elif seq_len is None:
+        seq_len = GAT2_CONFIG["max_seq_len"]
+        print(f"seq_len      : {seq_len}h  (default from GAT2_CONFIG)")
+    else:
+        print(f"seq_len      : {seq_len}h  (from --seq-len arg)")
 
     with open(prep_cfg_path) as f:
         prep_cfg = json.load(f)
@@ -70,12 +104,13 @@ def evaluate_temporal_gat():
         else "mps" if torch.backends.mps.is_available()
         else "cpu"
     )
-    print(f"Device: {device}")
+    print(f"Device       : {device}")
 
     data_dirs = find_data_dirs(os.path.dirname(sepsis_root), sepsis_root)
 
-    test_ds = PhysioNetDatasetGRUD(data_dirs, splits["test"], prep_cfg_path, 336)
-    test_loader = DataLoader(test_ds, batch_size=8, shuffle=False,
+    # Use the correct seq_len for the chosen split dataset
+    eval_ds = PhysioNetDatasetGRUD(data_dirs, splits[split], prep_cfg_path, seq_len)
+    eval_loader = DataLoader(eval_ds, batch_size=8, shuffle=False,
                              collate_fn=collate_fn, num_workers=0)
 
     clinical_src, clinical_dst = load_clinical_edges(edges_csv)
@@ -85,21 +120,27 @@ def evaluate_temporal_gat():
         num_features=F, static_size=S,
         hidden_dim=cfg["hidden_dim"], out_dim=cfg["out_dim"],
         num_heads=cfg["num_heads"], num_gat_layers=cfg["num_gat_layers"],
-        dropout=0.0,  # no dropout at eval
+        dropout=0.0,  # no dropout at eval time
     ).to(device)
 
+    # Bake adjacency into model (required before load_state_dict)
+    model.set_adjacency(clinical_src, clinical_dst, cfg["add_self_loops"])
+
     if os.path.exists(model_path):
-        model.load_state_dict(torch.load(model_path, map_location=device))
-        print(f"Loaded model: {model_path}")
+        model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
+        print(f"Loaded model : {model_path}")
     else:
-        print(f"WARNING: {model_path} not found — evaluating random weights")
+        raise FileNotFoundError(
+            f"Checkpoint not found: {model_path}\n"
+            f"Did you mean to pass --model-path <path>?"
+        )
 
     model.eval()
     all_preds  = []
     all_labels = []
 
     with torch.no_grad():
-        for values, mask, delta, static_feat, labels, valid_mask in test_loader:
+        for values, mask, delta, static_feat, labels, valid_mask in eval_loader:
             values      = values.to(device)
             mask        = mask.to(device)
             delta       = delta.to(device)
@@ -107,15 +148,8 @@ def evaluate_temporal_gat():
             labels      = labels.to(device)
             valid_mask  = valid_mask.to(device)
 
-            T_pad = values.size(1)
-            valid_lens = valid_mask.sum(dim=1).cpu().tolist()
-            valid_lens = [int(v) for v in valid_lens]
-            edge_index, _, _ = build_batched_temporal_edge_index(
-                valid_lens, clinical_src, clinical_dst, T_pad, cfg["add_self_loops"]
-            )
-            edge_index = edge_index.to(device)
-
-            logits = model(values, mask, delta, static_feat, edge_index, valid_mask)
+            # TemporalGAT uses baked adjacency — no edge_index needed at runtime
+            logits = model(values, mask, delta, static_feat, valid_mask=valid_mask)
             probs  = torch.sigmoid(logits)
 
             all_preds.append(probs[valid_mask].cpu())
@@ -131,28 +165,34 @@ def evaluate_temporal_gat():
     rec    = recall_score(all_labels, bin_p, zero_division=0)
     f1     = f1_score(all_labels, bin_p, zero_division=0)
 
+    prefix = split.capitalize()
     metrics = {
-        "model": "GAT-2 (TemporalGAT)",
-        "Test AUPRC": float(auprc),
-        "Test AUROC": float(auroc),
-        "Test Precision": float(prec),
-        "Test Recall": float(rec),
-        "Test F1": float(f1),
+        "model": f"GAT-2 (TemporalGAT, seq_len={seq_len}h)",
+        "run_name": run_name,
+        "split": split,
+        "seq_len": seq_len,
+        f"{prefix} AUPRC": float(auprc),
+        f"{prefix} AUROC": float(auroc),
+        f"{prefix} Precision": float(prec),
+        f"{prefix} Recall": float(rec),
+        f"{prefix} F1": float(f1),
     }
-    with open(os.path.join(results_dir, "metrics.json"), "w") as f:
+    metrics_file = f"{split}_metrics.json" if split != "test" else "metrics.json"
+    metrics_path = os.path.join(results_dir, metrics_file)
+    with open(metrics_path, "w") as f:
         json.dump(metrics, f, indent=4)
 
-    print(f"\nTest AUPRC : {auprc:.4f}")
-    print(f"Test AUROC : {auroc:.4f}")
-    print(f"Test F1    : {f1:.4f}")
-    print(f"Saved: {results_dir}/metrics.json")
+    print(f"\n{prefix} AUPRC : {auprc:.4f}")
+    print(f"{prefix} AUROC : {auroc:.4f}")
+    print(f"{prefix} F1    : {f1:.4f}")
+    print(f"Saved: {metrics_path}")
 
     if HAS_MPL:
         prec_vals, rec_vals, _ = precision_recall_curve(all_labels, all_preds)
         plt.figure(figsize=(8, 6))
         plt.plot(rec_vals, prec_vals, label=f"AUPRC={auprc:.4f}")
         plt.xlabel("Recall"); plt.ylabel("Precision")
-        plt.title("GAT-2 Temporal GAT — PR Curve")
+        plt.title(f"GAT-2 ({run_name}) — PR Curve")
         plt.legend(); plt.tight_layout()
         plt.savefig(os.path.join(plots_dir, "pr_curve.png")); plt.close()
 
@@ -161,7 +201,7 @@ def evaluate_temporal_gat():
         plt.plot(fpr, tpr, label=f"AUROC={auroc:.4f}")
         plt.plot([0, 1], [0, 1], "--", color="gray")
         plt.xlabel("FPR"); plt.ylabel("TPR")
-        plt.title("GAT-2 Temporal GAT — ROC Curve")
+        plt.title(f"GAT-2 ({run_name}) — ROC Curve")
         plt.legend(); plt.tight_layout()
         plt.savefig(os.path.join(plots_dir, "roc_curve.png")); plt.close()
 
@@ -171,4 +211,37 @@ def evaluate_temporal_gat():
 
 
 if __name__ == "__main__":
-    evaluate_temporal_gat()
+    parser = argparse.ArgumentParser(
+        description="Evaluate a saved TemporalGAT checkpoint on the test split."
+    )
+    parser.add_argument(
+        "--model-path", type=str, default=None,
+        help="Path to best_model.pt. Default: <results-dir>/best_model.pt"
+    )
+    parser.add_argument(
+        "--seq-len", type=int, default=None,
+        help="max_seq_len used during training (e.g. 72, 120). "
+             "Auto-detected from run_config.json in results-dir if omitted."
+    )
+    parser.add_argument(
+        "--results-dir", type=str, default=None,
+        help="Directory to save metrics.json. "
+             "Default: experiments/results/gat_temporal/"
+    )
+    parser.add_argument(
+        "--plots-dir", type=str, default=None,
+        help="Directory to save PR/ROC plots. "
+             "Default: experiments/gat/plots_<run_name>/"
+    )
+    parser.add_argument(
+        "--split", type=str, default="test", choices=["test", "val", "train"],
+        help="Dataset split to evaluate on ('test', 'val', or 'train'). Default: 'test'"
+    )
+    args = parser.parse_args()
+    evaluate_temporal_gat(
+        model_path=args.model_path,
+        seq_len=args.seq_len,
+        results_dir=args.results_dir,
+        plots_dir=args.plots_dir,
+        split=args.split,
+    )
