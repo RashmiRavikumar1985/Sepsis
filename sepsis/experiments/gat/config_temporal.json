@@ -1,0 +1,30 @@
+{
+  "model": "TemporalGAT",
+  "version": "GAT-2",
+  "description": "Temporal GAT - clinical spatial + temporal past-to-current edges",
+  "num_features": 35,
+  "static_size": 5,
+  "hidden_dim": 64,
+  "out_dim": 64,
+  "num_heads": 2,
+  "num_gat_layers": 2,
+  "dropout": 0.3,
+  "batch_size": 8,
+  "epochs": 30,
+  "patience": 5,
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "seed": 42,
+  "add_self_loops": true,
+  "max_seq_len": 336,
+  "node_ordering": "node_id(t, f) = t * F + f",
+  "edge_types": {
+    "clinical": "(f_i, t) -> (f_j, t) for each valid t, from edges.csv",
+    "temporal": "(f, t-1) -> (f, t) for consecutive valid t ONLY",
+    "self_loop": "(f, t) -> (f, t) for each valid node"
+  },
+  "correlation_threshold": 0.2,
+  "anti_leakage": "enforced: all temporal edges have source_t < dest_t",
+  "gru": "NOT USED in GAT-2 (temporal dynamics handled by graph edges)",
+  "pooling": "learned feature-attention pooling over 35 nodes per timestep"
+}
