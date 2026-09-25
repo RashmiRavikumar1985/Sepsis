@@ -6,7 +6,7 @@
     "dropout": 0.3,
     "max_sequence_length": 336,
     "learning_rate": 0.001,
-    "batch_size": 32,
+    "batch_size": 128,
     "epochs": 20,
     "patience": 5,
     "weight_decay": 1e-4,

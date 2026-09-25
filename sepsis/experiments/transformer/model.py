@@ -40,7 +40,14 @@ class TemporalTransformer(TemporalEncoder):
             dropout=dropout,
             batch_first=True
         )
-        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        # enable_nested_tensor=False disables PyTorch's nested-tensor mask
+        # merging optimization which calls aten::_nested_tensor_from_mask_left_aligned
+        # — an op not yet implemented on Apple MPS (and not needed for correctness).
+        self.transformer_encoder = nn.TransformerEncoder(
+            encoder_layer,
+            num_layers=num_layers,
+            enable_nested_tensor=False
+        )
 
         # Static feature projection
         self.static_proj = nn.Sequential(
@@ -85,12 +92,16 @@ class TemporalTransformer(TemporalEncoder):
         x = self.pos_encoder(x)                         # (batch, seq_len, d_model)
         
         # 3. Transformer Encoder with Causal Mask and Key Padding Mask
-        causal_mask = nn.Transformer.generate_square_subsequent_mask(seq_len, device=x.device)
-        key_padding_mask = ~valid_mask
-        
+        # Both masks must be the same dtype (bool) to avoid the deprecated
+        # mixed-type path and the unsupported MPS nested-tensor operator.
+        causal_mask = nn.Transformer.generate_square_subsequent_mask(
+            seq_len, device=x.device
+        ).bool()                          # True = position is masked (ignored)
+        key_padding_mask = ~valid_mask    # True = token is padding (ignored)
+
         memory = self.transformer_encoder(
-            x, 
-            mask=causal_mask, 
+            x,
+            mask=causal_mask,
             src_key_padding_mask=key_padding_mask
         )  # (batch, seq_len, d_model)
         

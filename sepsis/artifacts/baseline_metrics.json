@@ -1,0 +1,17 @@
+{
+    "model": "Transformer Baseline (35-Feature)",
+    "input_features": 35,
+    "static_features": 5,
+    "input_channels": 105,
+    "includes_iculos": true,
+    "iculos_index": 34,
+    "best_epoch": 5,
+    "best_val_auprc": 0.08881447265314024,
+    "best_val_auroc": 0.8123987825054837,
+    "test_loss": 1.0834887077605837,
+    "test_auprc": 0.10467017492928207,
+    "test_auroc": 0.8324928367695047,
+    "pos_weight": 54.543762781183304,
+    "seed": 42,
+    "config_source": "Clean ownership: preprocessing_config.json for data schema, config.json for hyperparams"
+}

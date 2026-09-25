@@ -91,7 +91,11 @@ def train_transformer():
     seed = config.get('seed', 42)
     set_seed(seed)
         
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device(
+        'cuda' if torch.cuda.is_available()
+        else 'mps' if torch.backends.mps.is_available()
+        else 'cpu'
+    )
     print(f"Device: {device}")
     
     # Load Splits
@@ -108,10 +112,16 @@ def train_transformer():
         os.path.join(project_root, "training", "training_setA"),
         os.path.join(project_root, "training", "training_setB")
     ]
+    cand_dirs_3 = [
+        os.path.join(sepsis_root, "training", "training_setA"),
+        os.path.join(sepsis_root, "training", "training_setB")
+    ]
     if os.path.exists(cand_dirs_1[0]):
         data_dirs = cand_dirs_1
     elif os.path.exists(cand_dirs_2[0]):
         data_dirs = cand_dirs_2
+    elif os.path.exists(cand_dirs_3[0]):
+        data_dirs = cand_dirs_3
     else:
         raise FileNotFoundError("Could not locate training_setA and training_setB data directories.")
 
@@ -148,12 +158,15 @@ def train_transformer():
     val_ds = PhysioNetDatasetGRUD(data_dirs, val_ids, preprocess_cfg, config['max_sequence_length'])
     test_ds = PhysioNetDatasetGRUD(data_dirs, test_ids, preprocess_cfg, config['max_sequence_length'])
     
-    train_loader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True, collate_fn=collate_fn, 
-                             generator=g, pin_memory=use_pin_memory, num_workers=0)
+    # On macOS MPS, num_workers > 0 can cause multiprocessing fork issues.
+    # Keep num_workers=0 for stability; batch_size=128 still keeps GPU fed.
+    n_workers = 0
+    train_loader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True, collate_fn=collate_fn,
+                             generator=g, pin_memory=use_pin_memory, num_workers=n_workers)
     val_loader = DataLoader(val_ds, batch_size=config['batch_size'], shuffle=False, collate_fn=collate_fn,
-                           pin_memory=use_pin_memory, num_workers=0)
+                           pin_memory=use_pin_memory, num_workers=n_workers)
     test_loader = DataLoader(test_ds, batch_size=config['batch_size'], shuffle=False, collate_fn=collate_fn,
-                            pin_memory=use_pin_memory, num_workers=0)
+                            pin_memory=use_pin_memory, num_workers=n_workers)
     
     model = TemporalTransformer(
         input_size=input_size,                      # From preprocessing config
@@ -173,8 +186,8 @@ def train_transformer():
     best_epoch = 0
     patience_counter = 0
 
-    results_dir = os.path.join(project_root, "experiments", "results", "transformer")
-    artifacts_dir = os.path.join(project_root, "artifacts")
+    results_dir = os.path.join(sepsis_root, "experiments", "results", "transformer")
+    artifacts_dir = os.path.join(sepsis_root, "artifacts")
     os.makedirs(results_dir, exist_ok=True)
     os.makedirs(artifacts_dir, exist_ok=True)
     
