@@ -1,7 +1,11 @@
 {
-    "Test AUPRC": 0.07121255470812302,
-    "Test AUROC": 0.7112768079800499,
-    "Test Precision": 0.078125,
-    "Test Recall": 0.2,
-    "Test F1": 0.11235955056179775
+    "Test AUPRC": 0.10826256105944518,
+    "Test AUROC": 0.7982741894314328,
+    "Test Precision": 0.1519364448857994,
+    "Test Recall": 0.2553648068669528,
+    "Test F1": 0.19051854487236503,
+    "Best Threshold": 0.8004629611968994,
+    "Best Val AUROC": 0.7746422763985303,
+    "Best Val AUPRC": 0.08022189907210552,
+    "Best Epoch": 39
 }

@@ -1,210 +1,523 @@
+"""
+train.py — GAT Phase 2 training script for FedSepsis-KG.
+
+All hyperparameters are loaded from experiments/gat/config_gat.json.
+Data schema (features, statistics, class weight) comes from artifacts/preprocessing_config.json.
+Patient splits come from artifacts/splits.json.
+Graph topology comes from experiments/gat/edges.csv (built by graph_builder.py).
+
+Usage:
+    python train.py                       # full dataset
+    python train.py --subset 2000         # fast CPU debug run
+    python train.py --config my_cfg.json  # custom config
+"""
+
 import os
 import sys
 import json
+import random
+import argparse
+
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from sklearn.metrics import average_precision_score, roc_auc_score
+from sklearn.metrics import (
+    average_precision_score,
+    roc_auc_score,
+    precision_recall_curve,
+    precision_score,
+    recall_score,
+    f1_score,
+)
 from tqdm import tqdm
 
 try:
     import matplotlib
-    matplotlib.use('Agg')  # Use non-interactive backend
+    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     HAS_MATPLOTLIB = True
-except Exception as e:
-    print(f"Warning: Could not import matplotlib: {e}")
+except Exception:
     HAS_MATPLOTLIB = False
 
-# Derive paths from this file's location
-# __file__ = f:\Sepsis\sepsis.1\sepsis\experiments\gat\train.py
-# dirname once  = f:\Sepsis\sepsis.1\sepsis\experiments\gat
-# dirname twice = f:\Sepsis\sepsis.1\sepsis\experiments
-# dirname thrice = f:\Sepsis\sepsis.1\sepsis  (project_root / sepsis_root)
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# project_root = f:\Sepsis\sepsis.1\sepsis
-physionet_root = os.path.dirname(project_root)  # f:\Sepsis\sepsis.1
+# ── Path setup ────────────────────────────────────────────────────────
+# __file__ = sepsis/experiments/gat/train.py
+# dirname once  = sepsis/experiments/gat/
+# dirname twice = sepsis/experiments/
+# dirname thrice = sepsis/              (SEPSIS_ROOT)
+# dirname four  = sepsis.1/             (PROJECT_ROOT)
+_THIS_FILE  = os.path.abspath(__file__)
+_GAT_DIR    = os.path.dirname(_THIS_FILE)
+SEPSIS_ROOT = os.path.dirname(os.path.dirname(_GAT_DIR))
+PROJECT_ROOT = os.path.dirname(SEPSIS_ROOT)
 
-sys.path.insert(0, project_root)
+sys.path.insert(0, SEPSIS_ROOT)
 
 from src.dataset_grud import PhysioNetDatasetGRUD, collate_fn
 from experiments.gat.model import GATBaseline
 
-def set_seed(seed=42):
-    import numpy as np
-    import random
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
+
+# ── Reproducibility ───────────────────────────────────────────────────
+def set_seed(seed: int) -> None:
     random.seed(seed)
-    torch.backends.cudnn.deterministic = True
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
-def train_gat():
-    print("=== Training GAT Baseline ===")
 
-    # Load hyperparameters from transformer config (epochs, patience, lr, etc.)
-    config_path = os.path.join(project_root, "experiments", "transformer", "config.json")
-    with open(config_path, 'r') as f:
-        config = json.load(f)
+# ── Loss ──────────────────────────────────────────────────────────────
+def masked_bce_loss(
+    logits: torch.Tensor,
+    labels: torch.Tensor,
+    valid_mask: torch.Tensor,
+    pos_weight: float,
+) -> torch.Tensor:
+    criterion = nn.BCEWithLogitsLoss(
+        pos_weight=torch.tensor([pos_weight], device=logits.device),
+        reduction="none",
+    )
+    per_hour = criterion(logits, labels) * valid_mask.float()
+    return per_hour.sum() / (valid_mask.float().sum() + 1e-9)
 
-    set_seed(config.get('seed', 42))
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# ── Evaluation ────────────────────────────────────────────────────────
+@torch.no_grad()
+def evaluate(model, loader, edge_index, edge_weight, pos_weight, device):
+    model.eval()
+    all_probs, all_labels = [], []
+    total_loss, total_hours = 0.0, 0
+
+    for values, mask, delta, static_feats, labels, valid_mask in loader:
+        values       = values.to(device)
+        mask         = mask.to(device)
+        delta        = delta.to(device)
+        static_feats = static_feats.to(device)
+        labels       = labels.to(device)
+        valid_mask   = valid_mask.to(device)
+
+        logits = model(values, mask, delta, static_feats, edge_index, valid_mask, edge_weight)
+        loss   = masked_bce_loss(logits, labels, valid_mask, pos_weight)
+
+        n_valid = int(valid_mask.sum().item())
+        total_loss  += loss.item() * n_valid
+        total_hours += n_valid
+
+        probs      = torch.sigmoid(logits)
+        flat_valid = valid_mask.bool().view(-1)
+        all_probs.append(probs.view(-1)[flat_valid].cpu())
+        all_labels.append(labels.view(-1)[flat_valid].cpu())
+
+    all_probs  = torch.cat(all_probs).numpy()
+    all_labels = torch.cat(all_labels).numpy()
+    avg_loss   = total_loss / (total_hours + 1e-9)
+
+    if len(set(all_labels.astype(int))) < 2:
+        return avg_loss, 0.0, 0.0
+
+    auroc = roc_auc_score(all_labels, all_probs)
+    auprc = average_precision_score(all_labels, all_probs)
+    return avg_loss, auroc, auprc
+
+
+# ── Full evaluation with F1-optimal threshold ─────────────────────────
+@torch.no_grad()
+def evaluate_full(model, loader, edge_index, edge_weight, pos_weight, device):
+    """Returns (avg_loss, auroc, auprc, precision, recall, f1, threshold)."""
+    model.eval()
+    all_probs, all_labels = [], []
+    total_loss, total_hours = 0.0, 0
+
+    for values, mask, delta, static_feats, labels, valid_mask in loader:
+        values       = values.to(device)
+        mask         = mask.to(device)
+        delta        = delta.to(device)
+        static_feats = static_feats.to(device)
+        labels       = labels.to(device)
+        valid_mask   = valid_mask.to(device)
+
+        logits = model(values, mask, delta, static_feats, edge_index, valid_mask, edge_weight)
+        loss   = masked_bce_loss(logits, labels, valid_mask, pos_weight)
+
+        n_valid = int(valid_mask.sum().item())
+        total_loss  += loss.item() * n_valid
+        total_hours += n_valid
+
+        probs      = torch.sigmoid(logits)
+        flat_valid = valid_mask.bool().view(-1)
+        all_probs.append(probs.view(-1)[flat_valid].cpu())
+        all_labels.append(labels.view(-1)[flat_valid].cpu())
+
+    all_probs  = torch.cat(all_probs).numpy()
+    all_labels = torch.cat(all_labels).numpy()
+    avg_loss   = total_loss / (total_hours + 1e-9)
+
+    if len(set(all_labels.astype(int))) < 2:
+        return avg_loss, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5
+
+    auroc = roc_auc_score(all_labels, all_probs)
+    auprc = average_precision_score(all_labels, all_probs)
+
+    prec_vals, rec_vals, thresholds = precision_recall_curve(all_labels, all_probs)
+    f1_vals  = 2 * prec_vals * rec_vals / (prec_vals + rec_vals + 1e-9)
+    best_idx = int(np.argmax(f1_vals[:-1]))
+    best_thr = float(thresholds[best_idx])
+
+    bin_preds = (all_probs >= best_thr).astype(int)
+    precision = precision_score(all_labels, bin_preds, zero_division=0)
+    recall    = recall_score(all_labels, bin_preds, zero_division=0)
+    f1        = f1_score(all_labels, bin_preds, zero_division=0)
+
+    return avg_loss, auroc, auprc, precision, recall, f1, best_thr
+
+
+# ── Main ─────────────────────────────────────────────────────────────
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Train GAT for sepsis prediction")
+    parser.add_argument(
+        "--config",
+        default=os.path.join(_GAT_DIR, "config_gat.json"),
+        help="Path to GAT hyperparameter config JSON",
+    )
+    parser.add_argument(
+        "--subset",
+        type=int,
+        default=None,
+        help="Limit training to N patients (fast CPU debug)",
+    )
+    args = parser.parse_args()
+
+    # ── Load hyperparameters ──────────────────────────────────────────
+    with open(args.config) as f:
+        cfg = json.load(f)
+
+    HIDDEN_DIM    = cfg["hidden_dim"]
+    OUT_DIM       = cfg["out_dim"]
+    HEADS         = cfg["heads"]
+    DROPOUT       = cfg["dropout"]
+    BATCH_SIZE    = cfg["batch_size"]
+    LR            = cfg["learning_rate"]
+    WEIGHT_DECAY  = cfg["weight_decay"]
+    EPOCHS        = cfg["epochs"]
+    PATIENCE      = cfg["patience"]
+    MAX_SEQ_LEN   = cfg["max_seq_len"]
+    SEED          = cfg["seed"]
+    GRAD_CLIP     = cfg.get("grad_clip", 1.0)
+    SCHED_FACTOR  = cfg.get("scheduler_factor", 0.5)
+    SCHED_PAT     = cfg.get("scheduler_patience", 3)
+
+    set_seed(SEED)
+
+    # ── Device ────────────────────────────────────────────────────────
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
     print(f"Device: {device}")
 
-    # Load splits
-    splits_path = os.path.join(project_root, "artifacts", "splits.json")
-    with open(splits_path, 'r') as f:
+    # ── Paths — all derived from __file__, nothing hardcoded ──────────
+    preprocess_cfg_path = os.path.join(SEPSIS_ROOT, "artifacts", "preprocessing_config.json")
+    splits_path         = os.path.join(SEPSIS_ROOT, "artifacts", "splits.json")
+    edges_path          = os.path.join(_GAT_DIR, "edges.csv")
+    results_dir         = os.path.join(SEPSIS_ROOT, "experiments", "results", "gat")
+    plots_dir           = os.path.join(_GAT_DIR, "plots")
+
+    os.makedirs(results_dir, exist_ok=True)
+    os.makedirs(plots_dir, exist_ok=True)
+
+    # Data directories — two-candidate fallback
+    cand_1 = [
+        os.path.join(PROJECT_ROOT, "physionet2019", "training", "training_setA"),
+        os.path.join(PROJECT_ROOT, "physionet2019", "training", "training_setB"),
+    ]
+    cand_2 = [
+        os.path.join(PROJECT_ROOT, "training", "training_setA"),
+        os.path.join(PROJECT_ROOT, "training", "training_setB"),
+    ]
+    if os.path.exists(cand_1[0]):
+        data_dirs = cand_1
+    elif os.path.exists(cand_2[0]):
+        data_dirs = cand_2
+    else:
+        raise FileNotFoundError(
+            f"Cannot find training data. Tried:\n  {cand_1[0]}\n  {cand_2[0]}"
+        )
+
+    # ── Load data schema ──────────────────────────────────────────────
+    with open(preprocess_cfg_path) as f:
+        prep_config = json.load(f)
+    with open(splits_path) as f:
         splits = json.load(f)
 
-    # Preprocessing config owns: data schema, feature counts, pos_weight
-    preprocess_cfg = os.path.join(project_root, "artifacts", "preprocessing_config.json")
-    with open(preprocess_cfg, 'r') as f:
-        prep_config = json.load(f)
-
-    num_nodes   = len(prep_config["dynamic_features"])   # 35
-    static_size = len(prep_config["static_features"])    # 5
+    num_nodes   = len(prep_config["dynamic_features"])
+    static_size = len(prep_config["static_features"])
     pos_weight  = prep_config["class_weight"]
 
-    print(f"Dynamic features (num_nodes): {num_nodes}")
-    print(f"Static features: {static_size}")
-    print(f"Positive class weight: {pos_weight:.2f}")
+    print(f"Nodes (dynamic features): {num_nodes}")
+    print(f"Static features         : {static_size}")
+    print(f"Positive class weight   : {pos_weight:.2f}")
+    print(f"Config                  : {args.config}")
 
-    # Dataset paths with two-candidate fallback (same pattern as transformer/train.py)
-    cand_dirs_1 = [
-        os.path.join(physionet_root, "physionet2019", "training", "training_setA"),
-        os.path.join(physionet_root, "physionet2019", "training", "training_setB"),
-    ]
-    cand_dirs_2 = [
-        os.path.join(physionet_root, "training", "training_setA"),
-        os.path.join(physionet_root, "training", "training_setB"),
-    ]
-    if os.path.exists(cand_dirs_1[0]):
-        data_dirs = cand_dirs_1
-    elif os.path.exists(cand_dirs_2[0]):
-        data_dirs = cand_dirs_2
+    # ── Load graph ────────────────────────────────────────────────────
+    # Graph path: from config "graph" key (relative to _GAT_DIR), or default edges.csv
+    graph_rel  = cfg.get("graph", None)
+    if graph_rel:
+        edges_path = os.path.join(_GAT_DIR, graph_rel, "edges.csv")
     else:
-        raise FileNotFoundError("Could not locate training_setA and training_setB data directories.")
+        edges_path = os.path.join(_GAT_DIR, "edges.csv")
 
-    # Load graph edges — path anchored to this script's directory
-    graph_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "edges.csv")
-    if not os.path.exists(graph_path):
-        print("Graph not found! Please run graph_builder.py first.")
-        return
+    if not os.path.exists(edges_path):
+        raise FileNotFoundError(
+            f"Graph edges not found at {edges_path}.\n"
+            f"Run graph_builder_v2.py to build Graph F."
+        )
+    edges_df    = pd.read_csv(edges_path)
+    edge_index  = torch.from_numpy(
+        np.stack([edges_df["source"].values, edges_df["target"].values]).astype(np.int64)
+    ).to(device)
+    edge_weight = torch.from_numpy(
+        edges_df["weight"].values.astype(np.float32)
+    ).to(device)
+    print(f"Graph: {num_nodes} nodes, {edge_index.size(1)} edges  [{edges_path}]")
 
-    import pandas as pd
-    edges_df = pd.read_csv(graph_path)
-    sources = edges_df['source'].values
-    targets = edges_df['target'].values
-    weights = edges_df['weight'].values
+    # ── Splits ────────────────────────────────────────────────────────
+    train_ids = splits["train"]
+    val_ids   = splits["val"]
+    test_ids  = splits.get("test", [])
 
-    edge_index = torch.tensor([sources, targets], dtype=torch.long).to(device)
-    edge_weight = torch.tensor(weights, dtype=torch.float).to(device)
+    if args.subset is not None:
+        print(f"Subsetting to {args.subset} training patients")
+        train_ids = train_ids[:args.subset]
+        val_ids   = val_ids[:max(100, args.subset // 5)]
 
-    train_ids = splits['train']
-    val_ids = splits['val']
+    # ── Datasets and loaders ──────────────────────────────────────────
+    train_ds = PhysioNetDatasetGRUD(data_dirs, train_ids, preprocess_cfg_path, MAX_SEQ_LEN)
+    val_ds   = PhysioNetDatasetGRUD(data_dirs, val_ids,   preprocess_cfg_path, MAX_SEQ_LEN)
 
-    train_ds = PhysioNetDatasetGRUD(data_dirs, train_ids, preprocess_cfg, config['max_sequence_length'])
-    val_ds = PhysioNetDatasetGRUD(data_dirs, val_ids, preprocess_cfg, config['max_sequence_length'])
+    g = torch.Generator()
+    g.manual_seed(SEED)
+    pin = device.type == "cuda"
 
-    # Use smaller batch size for GAT due to high memory requirement (flattening batch*seq_len*nodes)
-    batch_size = 8
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
+    train_loader = DataLoader(
+        train_ds, batch_size=BATCH_SIZE, shuffle=True,
+        collate_fn=collate_fn, num_workers=0, pin_memory=pin, generator=g,
+    )
+    val_loader = DataLoader(
+        val_ds, batch_size=BATCH_SIZE, shuffle=False,
+        collate_fn=collate_fn, num_workers=0, pin_memory=pin,
+    )
+    print(f"Train: {len(train_ds)} patients | Val: {len(val_ds)} patients")
 
+    # ── Model ─────────────────────────────────────────────────────────
     model = GATBaseline(
         num_nodes=num_nodes,
-        input_dim_per_node=3,         # value, mask, delta
+        input_dim_per_node=3,
         static_size=static_size,
-        hidden_dim=32,
-        out_dim=64,
-        heads=2,
-        dropout=config['dropout']
+        hidden_dim=HIDDEN_DIM,
+        out_dim=OUT_DIM,
+        heads=HEADS,
+        dropout=DROPOUT,
     ).to(device)
 
-    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight).to(device), reduction='none')
-    optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'], weight_decay=config['weight_decay'])
+    n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Model parameters: {n_params:,}")
+    print(f"Architecture    : hidden={HIDDEN_DIM}, out={OUT_DIM}, heads={HEADS}")
 
-    best_auprc = 0.0
+    # ── Optimizer and scheduler ───────────────────────────────────────
+    optimizer_name = cfg.get("optimizer", "AdamW")
+    if optimizer_name == "AdamW":
+        optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+    else:
+        optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode="max", factor=SCHED_FACTOR, patience=SCHED_PAT
+    )
+    print(f"Optimizer: {optimizer_name} | LR: {LR} | WD: {WEIGHT_DECAY}")
+
+    # ── Training state ────────────────────────────────────────────────
+    best_auprc, best_auroc, best_epoch = 0.0, 0.0, 0
     patience_counter = 0
-    results_dir = os.path.join(project_root, "experiments", "results", "gat")
-    os.makedirs(results_dir, exist_ok=True)
+    suffix    = f"subset_{args.subset}" if args.subset else "full"
+    ckpt_path = os.path.join(results_dir, f"best_model_{suffix}.pt")
+    log_path  = os.path.join(results_dir, f"training_log_{suffix}.json")
 
-    train_losses = []
-    val_losses = []
+    history = {
+        "config": {
+            **cfg,
+            "num_nodes": num_nodes,
+            "static_size": static_size,
+            "pos_weight": pos_weight,
+            "subset": args.subset,
+            "config_file": args.config,
+        },
+        "epochs": [],
+    }
 
-    for epoch in range(config['epochs']):
+    train_losses, val_losses = [], []
+
+    # ── Training loop ─────────────────────────────────────────────────
+    for epoch in range(1, EPOCHS + 1):
         model.train()
-        train_loss = 0
-        for values, mask, delta, static_features, labels, valid_mask in tqdm(train_loader, desc=f"Epoch {epoch+1}/{config['epochs']}"):
-            values, mask = values.to(device), mask.to(device)
-            delta, static_features = delta.to(device), static_features.to(device)
-            labels, valid_mask = labels.to(device), valid_mask.to(device)
+        epoch_loss, epoch_hours = 0.0, 0
+
+        pbar = tqdm(train_loader, desc=f"Epoch {epoch}/{EPOCHS}")
+        for values, mask, delta, static_feats, labels, valid_mask in pbar:
+            values       = values.to(device)
+            mask         = mask.to(device)
+            delta        = delta.to(device)
+            static_feats = static_feats.to(device)
+            labels       = labels.to(device)
+            valid_mask   = valid_mask.to(device)
+
+            logits = model(values, mask, delta, static_feats, edge_index, valid_mask, edge_weight)
+            loss   = masked_bce_loss(logits, labels, valid_mask, pos_weight)
 
             optimizer.zero_grad()
-            logits = model(values, mask, delta, static_features, edge_index, edge_weight)
-            loss_matrix = criterion(logits, labels)
-
-            loss = (loss_matrix * valid_mask).sum() / valid_mask.sum().clamp(min=1.0)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), GRAD_CLIP)
             optimizer.step()
-            train_loss += loss.item()
 
-        avg_train_loss = train_loss / len(train_loader)
+            n = int(valid_mask.sum().item())
+            epoch_loss  += loss.item() * n
+            epoch_hours += n
+            pbar.set_postfix(loss=f"{loss.item():.4f}")
+
+        avg_train_loss = epoch_loss / (epoch_hours + 1e-9)
+        val_loss, val_auroc, val_auprc = evaluate(
+            model, val_loader, edge_index, edge_weight, pos_weight, device
+        )
+
+        lr_before = optimizer.param_groups[0]["lr"]
+        scheduler.step(val_auprc)
+        lr_after  = optimizer.param_groups[0]["lr"]
+        lr_note   = f" | LR: {lr_after:.2e}" + (" (reduced)" if lr_after < lr_before else "")
+
+        print(
+            f"  Epoch {epoch:02d} | Train Loss: {avg_train_loss:.4f} | "
+            f"Val Loss: {val_loss:.4f} | Val AUROC: {val_auroc:.4f} | "
+            f"Val AUPRC: {val_auprc:.4f}{lr_note}"
+        )
+
         train_losses.append(avg_train_loss)
+        val_losses.append(val_loss)
 
-        # Validation
-        model.eval()
-        val_loss = 0
-        all_preds = []
-        all_labels = []
-        with torch.no_grad():
-            for values, mask, delta, static_features, labels, valid_mask in val_loader:
-                values, mask = values.to(device), mask.to(device)
-                delta, static_features = delta.to(device), static_features.to(device)
-                labels, valid_mask = labels.to(device), valid_mask.to(device)
-
-                logits = model(values, mask, delta, static_features, edge_index, edge_weight)
-                loss_matrix = criterion(logits, labels)
-                loss = (loss_matrix * valid_mask).sum() / valid_mask.sum().clamp(min=1.0)
-                val_loss += loss.item()
-
-                probs = torch.sigmoid(logits)
-                valid_idx = valid_mask.bool()
-                all_preds.extend(probs[valid_idx].cpu().numpy().tolist())
-                all_labels.extend(labels[valid_idx].cpu().numpy().tolist())
-
-        avg_val_loss = val_loss / len(val_loader)
-        val_losses.append(avg_val_loss)
-        val_auprc = average_precision_score(all_labels, all_preds)
-        val_auroc = roc_auc_score(all_labels, all_preds)
-
-        print(f"Epoch {epoch+1}: Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f} | Val AUPRC: {val_auprc:.4f} | Val AUROC: {val_auroc:.4f}")
+        history["epochs"].append({
+            "epoch": epoch,
+            "train_loss": avg_train_loss,
+            "val_loss": val_loss,
+            "val_auroc": val_auroc,
+            "val_auprc": val_auprc,
+            "lr": lr_after,
+        })
 
         if val_auprc > best_auprc:
-            best_auprc = val_auprc
-            torch.save(model.state_dict(), os.path.join(results_dir, "best_model.pt"))
+            best_auprc, best_auroc, best_epoch = val_auprc, val_auroc, epoch
             patience_counter = 0
+            torch.save({
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "val_auprc": val_auprc,
+                "val_auroc": val_auroc,
+                "config": history["config"],
+                "num_nodes": num_nodes,
+                "static_size": static_size,
+            }, ckpt_path)
+            # keep a canonical copy for Phase 3 fusion
+            torch.save(
+                torch.load(ckpt_path, weights_only=False),
+                os.path.join(SEPSIS_ROOT, "artifacts", "baseline_gat.pt"),
+            )
+            print(f"  ** New best AUPRC={val_auprc:.4f} — checkpoint saved")
         else:
             patience_counter += 1
-            if patience_counter >= config['patience']:
-                print("Early stopping triggered!")
+            print(f"  No improvement ({patience_counter}/{PATIENCE})")
+            if patience_counter >= PATIENCE:
+                print("Early stopping triggered.")
                 break
 
-    # Plot losses
-    if HAS_MATPLOTLIB:
+    history["best_epoch"]     = best_epoch
+    history["best_val_auprc"] = best_auprc
+    history["best_val_auroc"] = best_auroc
+
+    # ── Test evaluation ───────────────────────────────────────────────
+    print("\n" + "=" * 60)
+    print("Final Evaluation on Held-Out Test Set")
+    print("=" * 60)
+
+    if test_ids and os.path.exists(ckpt_path):
+        best_ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+        model.load_state_dict(best_ckpt["model_state_dict"])
+
+        test_ds = PhysioNetDatasetGRUD(data_dirs, test_ids, preprocess_cfg_path, MAX_SEQ_LEN)
+        test_loader = DataLoader(
+            test_ds, batch_size=BATCH_SIZE, shuffle=False,
+            collate_fn=collate_fn, num_workers=0, pin_memory=pin,
+        )
+        test_loss, test_auroc, test_auprc, test_precision, test_recall, test_f1, best_thr = \
+            evaluate_full(model, test_loader, edge_index, edge_weight, pos_weight, device)
+
+        history["test_results"] = {
+            "test_patients"  : len(test_ds),
+            "test_loss"      : test_loss,
+            "test_auroc"     : test_auroc,
+            "test_auprc"     : test_auprc,
+            "test_precision" : test_precision,
+            "test_recall"    : test_recall,
+            "test_f1"        : test_f1,
+            "best_threshold" : best_thr,
+        }
+
+        metrics = {
+            "Test AUPRC"     : float(test_auprc),
+            "Test AUROC"     : float(test_auroc),
+            "Test Precision" : float(test_precision),
+            "Test Recall"    : float(test_recall),
+            "Test F1"        : float(test_f1),
+            "Best Threshold" : best_thr,
+            "Best Val AUROC" : best_auroc,
+            "Best Val AUPRC" : best_auprc,
+            "Best Epoch"     : best_epoch,
+        }
+        with open(os.path.join(results_dir, "metrics.json"), "w") as f:
+            json.dump(metrics, f, indent=4)
+
+        print(f"Test patients  : {len(test_ds)}")
+        print(f"Test AUROC     : {test_auroc:.4f}")
+        print(f"Test AUPRC     : {test_auprc:.4f}")
+        print(f"Test Precision : {test_precision:.4f}  (@ threshold {best_thr:.3f})")
+        print(f"Test Recall    : {test_recall:.4f}")
+        print(f"Test F1        : {test_f1:.4f}")
+    else:
+        print("No test splits found or checkpoint missing — skipping test evaluation.")
+
+    # ── Save training log ─────────────────────────────────────────────
+    with open(log_path, "w") as f:
+        json.dump(history, f, indent=4)
+    print(f"\nTraining log saved → {log_path}")
+    print(f"Best Val AUPRC: {best_auprc:.4f} | Best Val AUROC: {best_auroc:.4f} | Best Epoch: {best_epoch}")
+
+    # ── Loss curve plot ───────────────────────────────────────────────
+    if HAS_MATPLOTLIB and train_losses:
         plt.figure(figsize=(10, 6))
-        plt.plot(range(1, len(train_losses) + 1), train_losses, label='Train Loss')
-        plt.plot(range(1, len(val_losses) + 1), val_losses, label='Validation Loss')
-        plt.xlabel('Epochs')
-        plt.ylabel('Loss')
-        plt.title('GAT Training and Validation Loss')
+        plt.plot(range(1, len(train_losses) + 1), train_losses, label="Train Loss")
+        plt.plot(range(1, len(val_losses)   + 1), val_losses,   label="Val Loss")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        plt.title("GAT Training and Validation Loss")
         plt.legend()
-        plot_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plots")
-        os.makedirs(plot_dir, exist_ok=True)
-        plt.savefig(os.path.join(plot_dir, "loss_curve.png"))
+        plt.tight_layout()
+        plt.savefig(os.path.join(plots_dir, "loss_curve.png"))
         plt.close()
+        print(f"Loss curve saved → {plots_dir}/loss_curve.png")
+
 
 if __name__ == "__main__":
-    train_gat()
+    main()

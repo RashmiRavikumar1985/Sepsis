@@ -1,7 +1,10 @@
 {
-    "Test AUPRC": 0.11247674317594634,
-    "Test AUROC": 0.8435805571100494,
-    "Test Precision": 0.0,
-    "Test Recall": 0.0,
-    "Test F1": 0.0
+    "Test AUPRC": 0.13074827941909495,
+    "Test AUROC": 0.846391019256335,
+    "Test Precision": 0.1787527193618564,
+    "Test Recall": 0.23509775870290892,
+    "Test F1": 0.2030895983522142,
+    "Best Threshold": 0.8920451402664185,
+    "N Timesteps": 234302,
+    "Pct Positive": 1.789997524562317
 }

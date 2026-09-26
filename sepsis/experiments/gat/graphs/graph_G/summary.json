@@ -1,0 +1,12 @@
+{
+    "graph_id": "G",
+    "description": "Spearman |\u03c1| >= 0.30 + MI + clinical priors",
+    "n_nodes": 35,
+    "n_edges_unique": 176,
+    "n_edges_total": 352,
+    "weight_mean": 0.2775588796102556,
+    "weight_min": 0.003545677853004298,
+    "weight_max": 0.9567289795542054,
+    "n_clinical_edges": 27,
+    "n_statistical_edges": 149
+}

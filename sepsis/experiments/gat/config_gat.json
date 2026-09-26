@@ -1,0 +1,18 @@
+{
+    "hidden_dim": 64,
+    "out_dim": 128,
+    "heads": 4,
+    "dropout": 0.2,
+    "batch_size": 32,
+    "learning_rate": 1e-3,
+    "weight_decay": 1e-4,
+    "epochs": 40,
+    "patience": 12,
+    "max_seq_len": 336,
+    "seed": 42,
+    "optimizer": "AdamW",
+    "grad_clip": 1.0,
+    "scheduler_factor": 0.5,
+    "scheduler_patience": 2,
+    "graph": "graphs/graph_F"
+}

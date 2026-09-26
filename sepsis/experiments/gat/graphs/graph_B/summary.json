@@ -1,0 +1,12 @@
+{
+    "graph_id": "B",
+    "description": "|\u03c1| >= 0.30 \u2014 stricter threshold (Spearman)",
+    "n_nodes": 35,
+    "n_edges_unique": 35,
+    "n_edges_total": 70,
+    "weight_mean": 0.4830811709981206,
+    "weight_min": 0.3121853165997713,
+    "weight_max": 0.9567289795542054,
+    "n_clinical_edges": 15,
+    "n_statistical_edges": 20
+}

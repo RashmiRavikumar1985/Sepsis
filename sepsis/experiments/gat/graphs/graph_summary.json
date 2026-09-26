@@ -1,0 +1,86 @@
+[
+    {
+        "graph_id": "A",
+        "description": "|\u03c1| >= 0.20 \u2014 current baseline (Spearman)",
+        "n_nodes": 35,
+        "n_edges_unique": 78,
+        "n_edges_total": 156,
+        "weight_mean": 0.35021932043904475,
+        "weight_min": 0.2024726563549814,
+        "weight_max": 0.9567289795542054,
+        "n_clinical_edges": 18,
+        "n_statistical_edges": 60
+    },
+    {
+        "graph_id": "B",
+        "description": "|\u03c1| >= 0.30 \u2014 stricter threshold (Spearman)",
+        "n_nodes": 35,
+        "n_edges_unique": 35,
+        "n_edges_total": 70,
+        "weight_mean": 0.4830811709981206,
+        "weight_min": 0.3121853165997713,
+        "weight_max": 0.9567289795542054,
+        "n_clinical_edges": 15,
+        "n_statistical_edges": 20
+    },
+    {
+        "graph_id": "C",
+        "description": "|\u03c1| >= 0.35 \u2014 aggressive pruning (Spearman)",
+        "n_nodes": 35,
+        "n_edges_unique": 25,
+        "n_edges_total": 50,
+        "weight_mean": 0.5457923610266856,
+        "weight_min": 0.35395742049855344,
+        "weight_max": 0.9567289795542054,
+        "n_clinical_edges": 13,
+        "n_statistical_edges": 12
+    },
+    {
+        "graph_id": "D",
+        "description": "Adaptive top-k (k=5 per node, Spearman)",
+        "n_nodes": 35,
+        "n_edges_unique": 114,
+        "n_edges_total": 228,
+        "weight_mean": 0.2860158308257528,
+        "weight_min": 0.09310342866866335,
+        "weight_max": 0.9567289795542054,
+        "n_clinical_edges": 19,
+        "n_statistical_edges": 95
+    },
+    {
+        "graph_id": "E",
+        "description": "Spearman |\u03c1| >= 0.30 + MI (top 30%)",
+        "n_nodes": 35,
+        "n_edges_unique": 169,
+        "n_edges_total": 338,
+        "weight_mean": 0.22385324306501223,
+        "weight_min": 0.003545677853004298,
+        "weight_max": 0.9567289795542054,
+        "n_clinical_edges": 20,
+        "n_statistical_edges": 149
+    },
+    {
+        "graph_id": "F",
+        "description": "Spearman |\u03c1| >= 0.30 + clinical priors",
+        "n_nodes": 35,
+        "n_edges_unique": 47,
+        "n_edges_total": 94,
+        "weight_mean": 0.6136561778384918,
+        "weight_min": 0.3121853165997713,
+        "weight_max": 0.9567289795542054,
+        "n_clinical_edges": 27,
+        "n_statistical_edges": 20
+    },
+    {
+        "graph_id": "G",
+        "description": "Spearman |\u03c1| >= 0.30 + MI + clinical priors",
+        "n_nodes": 35,
+        "n_edges_unique": 176,
+        "n_edges_total": 352,
+        "weight_mean": 0.2775588796102556,
+        "weight_min": 0.003545677853004298,
+        "weight_max": 0.9567289795542054,
+        "n_clinical_edges": 27,
+        "n_statistical_edges": 149
+    }
+]

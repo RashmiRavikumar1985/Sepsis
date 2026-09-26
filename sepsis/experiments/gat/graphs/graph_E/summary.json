@@ -1,0 +1,12 @@
+{
+    "graph_id": "E",
+    "description": "Spearman |\u03c1| >= 0.30 + MI (top 30%)",
+    "n_nodes": 35,
+    "n_edges_unique": 169,
+    "n_edges_total": 338,
+    "weight_mean": 0.22385324306501223,
+    "weight_min": 0.003545677853004298,
+    "weight_max": 0.9567289795542054,
+    "n_clinical_edges": 20,
+    "n_statistical_edges": 149
+}
