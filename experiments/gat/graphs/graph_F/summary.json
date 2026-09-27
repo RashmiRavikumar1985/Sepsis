@@ -1,0 +1,12 @@
+{
+    "graph_id": "F",
+    "description": "Spearman |rho| >= 0.30 + clinical priors (v2)",
+    "n_nodes": 35,
+    "n_edges_unique": 67,
+    "n_edges_total": 134,
+    "weight_mean": 0.6679501380765762,
+    "weight_min": 0.3121853165997713,
+    "weight_max": 0.9567289795542054,
+    "n_clinical_edges": 49,
+    "n_statistical_edges": 18
+}

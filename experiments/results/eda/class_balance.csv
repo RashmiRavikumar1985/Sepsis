@@ -1,0 +1,2 @@
+total_samples,positive_samples,negative_samples,positive_ratio,negative_ratio,pos_weight,patient_positive_count,patient_negative_count,imbalance_ratio,positive_to_negative_ratio,negative_to_positive_ratio,recommended_loss_strategy,recommended_metrics
+1552210.0,27916.0,1524294.0,0.01798467990800214,0.9820153200919979,54.602880068777765,2932,37404,54.602880068777765,0.018314052276004498,54.602880068777765,BCEWithLogitsLoss with pos_weight,"['AUPRC', 'AUROC']"

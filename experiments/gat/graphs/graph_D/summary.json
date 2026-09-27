@@ -1,0 +1,12 @@
+{
+    "graph_id": "D",
+    "description": "Adaptive top-k (k=5 per node, Spearman)",
+    "n_nodes": 35,
+    "n_edges_unique": 114,
+    "n_edges_total": 228,
+    "weight_mean": 0.2860158308257528,
+    "weight_min": 0.09310342866866335,
+    "weight_max": 0.9567289795542054,
+    "n_clinical_edges": 19,
+    "n_statistical_edges": 95
+}

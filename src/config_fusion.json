@@ -1,0 +1,33 @@
+{
+    "grud_hidden":   128,
+    "gat_hidden":    64,
+    "gat_out":       128,
+    "gat_heads":     4,
+    "fusion_heads":  4,
+    "mlp_hidden1":   128,
+    "mlp_hidden2":   64,
+    "dropout":       0.2,
+    "static_inject": true,
+    "grud_attn": {
+        "enabled":            true,
+        "num_heads":          8,
+        "attention_dropout":  0.1,
+        "temperature":        1.0
+    },
+    "freeze_grud":   false,
+    "freeze_gat":    false,
+    "batch_size":    32,
+    "learning_rate": 3e-4,
+    "weight_decay":  1e-4,
+    "epochs":        40,
+    "patience":      12,
+    "max_seq_len":   336,
+    "seed":          42,
+    "optimizer":     "AdamW",
+    "grad_clip":     1.0,
+    "scheduler_factor":  0.5,
+    "scheduler_patience": 3,
+    "graph": "experiments/gat/graphs/graph_F",
+    "_architecture": "ICU EHR → [GRU-D | Medical KG+GAT] → [h_GRU | h_GAT] → Attention-Gated Fusion → Prediction MLP → Sepsis Risk",
+    "_notes": "Phase 3 fusion. gat_out must equal grud_hidden (both=128) for cross-attention to work."
+}

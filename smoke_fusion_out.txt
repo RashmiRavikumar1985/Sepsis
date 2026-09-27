@@ -1,0 +1,26 @@
+============================================================
+FusionModel Smoke Test  (Architecture v2 — Attention-Gated)
+============================================================
+  Total params     : 489,965
+  Trainable params : 489,965
+  Output shape     : torch.Size([4, 20])  ✓
+  No NaN / Inf     : ✓
+  Padded = 0.0     : ✓
+  Gradients flow   : ✓  (loss=31.7605)
+  h_GRU shape      : torch.Size([4, 20, 128])  ✓
+  h_GAT shape      : torch.Size([4, 20, 128])  ✓
+  Fused shape      : torch.Size([4, 20, 128])  ✓
+  Gate α mean      : 0.478  ✓
+  Gate β mean      : 0.518  ✓
+============================================================
+ALL CHECKS PASSED ✓  FusionModel ready to train.
+============================================================
+
+Run full training:
+  python src/train_fusion.py
+
+Run subset (fast debug):
+  python src/train_fusion.py --subset 500
+
+Fine-tune fusion head only (frozen encoders):
+  python src/train_fusion.py --freeze_grud --freeze_gat

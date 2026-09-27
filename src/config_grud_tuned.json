@@ -1,0 +1,23 @@
+{
+    "hidden_size": 128,
+    "dropout": 0.3,
+    "batch_size": 64,
+    "learning_rate": 3e-4,
+    "epochs": 30,
+    "patience": 12,
+    "max_seq_len": 336,
+    "seed": 42,
+    "optimizer": "AdamW",
+    "weight_decay": 1e-4,
+    "scheduler_factor": 0.5,
+    "scheduler_patience": 3,
+    "grad_clip": 1.0,
+    "warmup_steps": 0,
+    "lr_schedule": "reduce_on_plateau",
+    "attention": {
+        "enabled": true,
+        "num_heads": 8,
+        "attention_dropout": 0.2,
+        "temperature": 1.0
+    }
+}

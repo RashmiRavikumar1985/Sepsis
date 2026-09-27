@@ -1,0 +1,10 @@
+torch>=2.0.0+cu118
+torchvision>=0.15.0+cu118
+torchaudio>=2.0.0+cu118
+torch_geometric
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+tqdm

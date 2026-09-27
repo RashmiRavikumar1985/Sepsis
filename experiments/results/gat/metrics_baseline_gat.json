@@ -1,0 +1,12 @@
+{
+    "_description": "Baseline GAT — old graph (Pearson, 1000 patients, threshold=0.2, 122 edges)",
+    "Test AUPRC": 0.10457281556735482,
+    "Test AUROC": 0.797482732165516,
+    "Test Precision": 0.14738529847064627,
+    "Test Recall": 0.2849308536003815,
+    "Test F1": 0.1942773532758901,
+    "Best Threshold": 0.8016976118087769,
+    "Best Val AUROC": 0.7643768622810827,
+    "Best Val AUPRC": 0.07785516122064985,
+    "Best Epoch": 28
+}

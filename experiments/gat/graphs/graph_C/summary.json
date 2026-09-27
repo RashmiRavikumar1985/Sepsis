@@ -1,0 +1,12 @@
+{
+    "graph_id": "C",
+    "description": "|\u03c1| >= 0.35 \u2014 aggressive pruning (Spearman)",
+    "n_nodes": 35,
+    "n_edges_unique": 25,
+    "n_edges_total": 50,
+    "weight_mean": 0.5457923610266856,
+    "weight_min": 0.35395742049855344,
+    "weight_max": 0.9567289795542054,
+    "n_clinical_edges": 13,
+    "n_statistical_edges": 12
+}

@@ -1,0 +1,616 @@
+""""""Quick smoke test: load 1 batch through the full pipeline and verify shapes."""
+
+import sys
+import os
+import json
+import torch
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from src.dataset_grud import PhysioNetDatasetGRUD, collate_fn
+from src.model_grud import GRUD
+from torch.utils.data import DataLoader
+
+
+DATA_DIRS = [
+    "/Users/mouneshkumaran/Downloads/physionet2019/training/training_setA",
+    "/Users/mouneshkumaran/Downloads/physionet2019/training/training_setB",
+]
+
+CONFIG_PATH = "/Users/mouneshkumaran/Downloads/physionet2019/artifacts/preprocessing_config.json"
+
+SPLITS_PATH = "/Users/mouneshkumaran/Downloads/physionet2019/artifacts/splits.json"
+
+
+with open(CONFIG_PATH) as f:
+    config = json.load(f)
+
+with open(SPLITS_PATH) as f:
+    splits = json.load(f)
+
+
+# Use just 20 patients for the smoke test
+patient_ids = splits["train"][:20]
+
+ds = PhysioNetDatasetGRUD(
+    DATA_DIRS,
+    patient_ids,
+    CONFIG_PATH,
+    max_seq_len=100
+)
+
+loader = DataLoader(
+    ds,
+    batch_size=4,
+    shuffle=False,
+    collate_fn=collate_fn
+)
+
+print(f"Dataset size: {len(ds)}")
+
+values, mask, delta, static_features, labels, valid_mask = next(iter(loader))
+
+print("Batch shapes:")
+print(f"  values:          {values.shape}")
+print(f"  mask:            {mask.shape}")
+print(f"  delta:           {delta.shape}")
+print(f"  static_features: {static_features.shape}")
+print(f"  labels:          {labels.shape}")
+print(f"  valid_mask:      {valid_mask.shape}")
+
+D = values.shape[2]
+S = static_features.shape[1]
+
+model = GRUD(
+    input_size=D,
+    static_size=S,
+    hidden_size=64,
+    dropout=0.0
+)
+
+logits = model(
+    values,
+    mask,
+    delta,
+    static_features
+)
+
+print(f"  logits:          {logits.shape}")
+
+
+# Quick gradient check
+loss = (logits * valid_mask).sum()
+loss.backward()
+
+grad_norm = sum(
+    p.grad.norm().item()
+    for p in model.parameters()
+    if p.grad is not None
+)
+
+print(f"  grad_norm:       {grad_norm:.4f}")
+
+print("\n=== Smoke test PASSED ===")
+Smoke test for the GRU-D PhysioNet 2019 pipeline.
+
+This script:
+1. Finds the project root automatically.
+2. Loads preprocessing configuration.
+3. Loads train/validation/test splits.
+4. Loads 20 training patients.
+5. Creates a DataLoader.
+6. Runs one batch through the GRU-D model.
+7. Checks tensor shapes.
+8. Performs a backward/gradient check.
+"""
+
+import os
+import sys
+import json
+from pathlib import Path
+
+import torch
+from torch.utils.data import DataLoader
+
+# ============================================================
+# 1. FIND PROJECT ROOT
+# ============================================================
+
+# __file__ = .../physionet2019/tests/smoke_test_grud.py
+# parent     = .../physionet2019/tests
+# parent     = .../physionet2019
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+print("=" * 60)
+print("GRU-D SMOKE TEST")
+print("=" * 60)
+print(f"Project root: {PROJECT_ROOT}")
+
+
+# ============================================================
+# 2. ADD PROJECT ROOT TO PYTHON PATH
+# ============================================================
+
+sys.path.insert(0, str(PROJECT_ROOT))
+
+
+# ============================================================
+# 3. IMPORT PROJECT MODULES
+# ============================================================
+
+try:
+    from src.dataset_grud import PhysioNetDatasetGRUD, collate_fn
+    from src.model_grud import GRUD
+except ImportError as e:
+    print("\nERROR: Could not import project modules.")
+    print(f"Import error: {e}")
+    print("\nMake sure these files exist:")
+    print("  src/dataset_grud.py")
+    print("  src/model_grud.py")
+    sys.exit(1)
+
+
+# ============================================================
+# 4. DEFINE PATHS
+# ============================================================
+
+ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+TRAINING_DIR = PROJECT_ROOT / "training"
+
+CONFIG_PATH = ARTIFACTS_DIR / "preprocessing_config.json"
+SPLITS_PATH = ARTIFACTS_DIR / "splits.json"
+
+DATA_DIRS = [
+    TRAINING_DIR / "training_setA",
+    TRAINING_DIR / "training_setB",
+]
+
+
+# ============================================================
+# 5. CHECK REQUIRED FILES
+# ============================================================
+
+print("\nChecking required files and directories...")
+
+required_files = [
+    CONFIG_PATH,
+    SPLITS_PATH,
+]
+
+for path in required_files:
+    if not path.exists():
+        print(f"\nERROR: Required file not found:")
+        print(f"  {path}")
+        sys.exit(1)
+
+    print(f"  [OK] {path}")
+
+
+# ============================================================
+# 6. CHECK TRAINING DIRECTORIES
+# ============================================================
+
+for data_dir in DATA_DIRS:
+    if not data_dir.exists():
+        print(f"\nERROR: Training directory not found:")
+        print(f"  {data_dir}")
+        sys.exit(1)
+
+    if not data_dir.is_dir():
+        print(f"\nERROR: Expected directory but found something else:")
+        print(f"  {data_dir}")
+        sys.exit(1)
+
+    print(f"  [OK] {data_dir}")
+
+
+# ============================================================
+# 7. LOAD CONFIGURATION
+# ============================================================
+
+print("\nLoading preprocessing configuration...")
+
+try:
+    with open(CONFIG_PATH, "r") as f:
+        config = json.load(f)
+
+    print(f"  [OK] Loaded: {CONFIG_PATH}")
+
+except Exception as e:
+    print("\nERROR while loading preprocessing_config.json:")
+    print(e)
+    sys.exit(1)
+
+
+# ============================================================
+# 8. LOAD DATA SPLITS
+# ============================================================
+
+print("\nLoading dataset splits...")
+
+try:
+    with open(SPLITS_PATH, "r") as f:
+        splits = json.load(f)
+
+    print(f"  [OK] Loaded: {SPLITS_PATH}")
+
+except Exception as e:
+    print("\nERROR while loading splits.json:")
+    print(e)
+    sys.exit(1)
+
+
+# ============================================================
+# 9. CHECK TRAIN SPLIT
+# ============================================================
+
+if "train" not in splits:
+    print("\nERROR: 'train' split not found in splits.json.")
+    print(f"Available keys: {list(splits.keys())}")
+    sys.exit(1)
+
+train_patients = splits["train"]
+
+print(f"\nTotal training patients: {len(train_patients)}")
+
+if len(train_patients) == 0:
+    print("ERROR: Training split is empty.")
+    sys.exit(1)
+
+
+# ============================================================
+# 10. SELECT PATIENTS FOR SMOKE TEST
+# ============================================================
+
+# Only use 20 patients to keep the smoke test fast.
+
+patient_ids = train_patients[:20]
+
+print(f"Patients used for smoke test: {len(patient_ids)}")
+
+
+# ============================================================
+# 11. PRINT DATA DIRECTORIES
+# ============================================================
+
+print("\nData directories:")
+
+for data_dir in DATA_DIRS:
+    print(f"  {data_dir}")
+
+
+# ============================================================
+# 12. CREATE DATASET
+# ============================================================
+
+print("\nCreating PhysioNet GRU-D dataset...")
+
+try:
+    dataset = PhysioNetDatasetGRUD(
+        [str(path) for path in DATA_DIRS],
+        patient_ids,
+        str(CONFIG_PATH),
+        max_seq_len=100,
+    )
+
+except Exception as e:
+    print("\nERROR while creating dataset:")
+    print(e)
+    raise
+
+
+print(f"Dataset size: {len(dataset)}")
+
+
+if len(dataset) == 0:
+    print("\nERROR: Dataset contains zero samples.")
+    sys.exit(1)
+
+
+# ============================================================
+# 13. CREATE DATALOADER
+# ============================================================
+
+loader = DataLoader(
+    dataset,
+    batch_size=4,
+    shuffle=False,
+    collate_fn=collate_fn,
+)
+
+
+# ============================================================
+# 14. LOAD ONE BATCH
+# ============================================================
+
+print("\nLoading first batch...")
+
+try:
+    batch = next(iter(loader))
+
+except Exception as e:
+    print("\nERROR while loading the first batch:")
+    print(e)
+    raise
+
+
+# ============================================================
+# 15. UNPACK BATCH
+# ============================================================
+
+try:
+    values, mask, delta, static_features, labels, valid_mask = batch
+
+except ValueError as e:
+    print("\nERROR: Unexpected batch format.")
+    print(f"Received {len(batch)} elements.")
+    raise
+
+
+# ============================================================
+# 16. PRINT BATCH SHAPES
+# ============================================================
+
+print("\nBatch shapes:")
+
+print(f"  values:          {values.shape}")
+print(f"  mask:            {mask.shape}")
+print(f"  delta:           {delta.shape}")
+print(f"  static_features: {static_features.shape}")
+print(f"  labels:          {labels.shape}")
+print(f"  valid_mask:      {valid_mask.shape}")
+
+
+# ============================================================
+# 17. BASIC SHAPE VALIDATION
+# ============================================================
+
+print("\nChecking tensor shapes...")
+
+if values.ndim != 3:
+    raise RuntimeError(
+        f"Expected values to have 3 dimensions, got {values.ndim}"
+    )
+
+if mask.shape != values.shape:
+    raise RuntimeError(
+        f"Mask shape {mask.shape} does not match "
+        f"values shape {values.shape}"
+    )
+
+if delta.shape != values.shape:
+    raise RuntimeError(
+        f"Delta shape {delta.shape} does not match "
+        f"values shape {values.shape}"
+    )
+
+if static_features.ndim != 2:
+    raise RuntimeError(
+        f"Expected static_features to have 2 dimensions, "
+        f"got {static_features.ndim}"
+    )
+
+print("  [OK] Tensor shapes look correct.")
+
+
+# ============================================================
+# 18. GET MODEL DIMENSIONS
+# ============================================================
+
+input_size = values.shape[2]
+static_size = static_features.shape[1]
+
+print("\nModel dimensions:")
+print(f"  Input size:  {input_size}")
+print(f"  Static size: {static_size}")
+
+
+# ============================================================
+# 19. SELECT DEVICE
+# ============================================================
+
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+elif torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+
+print(f"\nUsing device: {device}")
+
+
+# ============================================================
+# 20. MOVE TENSORS TO DEVICE
+# ============================================================
+
+values = values.to(device)
+mask = mask.to(device)
+delta = delta.to(device)
+static_features = static_features.to(device)
+
+
+# ============================================================
+# 21. CREATE GRU-D MODEL
+# ============================================================
+
+print("\nCreating GRU-D model...")
+
+model = GRUD(
+    input_size=input_size,
+    static_size=static_size,
+    hidden_size=64,
+    dropout=0.0,
+)
+
+model = model.to(device)
+
+print("  [OK] GRU-D model created.")
+
+
+# ============================================================
+# 22. FORWARD PASS
+# ============================================================
+
+print("\nRunning forward pass...")
+
+try:
+    logits = model(
+        values,
+        mask,
+        delta,
+        static_features,
+    )
+
+except Exception as e:
+    print("\nERROR during GRU-D forward pass:")
+    print(e)
+    raise
+
+
+print(f"  logits: {logits.shape}")
+
+
+# ============================================================
+# 23. CHECK LOGITS
+# ============================================================
+
+if not torch.isfinite(logits).all():
+    raise RuntimeError(
+        "Model output contains NaN or infinite values."
+    )
+
+print("  [OK] Forward pass successful.")
+print("  [OK] No NaN/Inf values in logits.")
+
+
+# ============================================================
+# 24. GRADIENT CHECK
+# ============================================================
+
+print("\nRunning gradient check...")
+
+model.zero_grad()
+
+# Move valid_mask to the same device.
+valid_mask_device = valid_mask.to(device)
+
+# Make sure the mask can be multiplied with logits.
+try:
+    loss = (logits * valid_mask_device).sum()
+
+except RuntimeError as e:
+    print("\nERROR: logits and valid_mask have incompatible shapes.")
+    print(f"  logits:      {logits.shape}")
+    print(f"  valid_mask:  {valid_mask_device.shape}")
+    print("\nOriginal error:")
+    print(e)
+    raise
+
+
+print(f"  Loss: {loss.item():.6f}")
+
+loss.backward()
+
+
+# ============================================================
+# 25. CALCULATE GRADIENT NORM
+# ============================================================
+
+grad_norm = 0.0
+parameter_count = 0
+
+for parameter in model.parameters():
+
+    if parameter.grad is not None:
+
+        parameter_count += 1
+
+        grad_norm += parameter.grad.norm().item()
+
+
+print(f"  Parameters with gradients: {parameter_count}")
+print(f"  Gradient norm: {grad_norm:.6f}")
+
+
+if parameter_count == 0:
+    raise RuntimeError(
+        "No model parameters received gradients."
+    )
+
+
+if not torch.isfinite(
+    torch.tensor(grad_norm)
+):
+    raise Runtime
+        "Gradient norm is NaN or infinite."
+    )
+
+
+# ============================================================
+# 26. SUCCESS
+# ============================================================
+
+print("\n" + "=" * 60)
+print("SMOKE TEST PASSED")
+print("=" * 60)
+
+print("\nThe following components are working:")
+print("  [OK] Project paths")
+print("  [OK] Configuration loading")
+print("  [OK] Dataset loading")
+print("  [OK] DataLoader")
+print("  [OK] Batch creation")
+print("  [OK] GRU-D model creation")
+print("  [OK] Forward pass")
+print("  [OK] Backward pass")
+print("  [OK] Gradient computation")
+
+print("\nReady for the next stage"""Quick smoke test: load 1 batch through the full pipeline and verify shapes."""
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import json
+import torch
+from src.dataset_grud import PhysioNetDatasetGRUD, collate_fn
+from src.model_grud import GRUD
+from torch.utils.data import DataLoader
+
+DATA_DIRS = [
+    r"c:\Users\rashm\Downloads\physionet2019\training\training_setA",
+    r"c:\Users\rashm\Downloads\physionet2019\training\training_setB",
+]
+CONFIG_PATH = r"c:\Users\rashm\Downloads\phystifacts\preprocessing_config.json"
+SPLITS_PATH = r"c:\Users\rashm\Downloads\physionet2019\artifacts\splits.json"
+
+with open(CONFIG_PATH) as f:
+    config = json.load(f)
+with open(SPLITS_PATH) as f:
+    splits = json.load(f)
+
+# Use just 20 patients for the smoke test
+patient_ids = splits['train'][:20]
+ds = PhysioNetDatasetGRUD(DATA_DIRS, patient_ids, CONFIG_PATH, max_seq_len=100)
+loader = DataLoader(ds, batch_size=4, shuffle=False, collate_fn=collate_fn)
+
+print(f"Dataset size: {len(ds)}")
+values, mask, delta, static_features, labels, valid_mask = next(iter(loader))
+print(f"Batch shapes:")
+print(f"  values:          {values.shape}")
+print(f"  mask:            {mask.shape}")
+print(f"  delta:           {delta.shape}")
+print(f"  static_features: {static_features.shape}")
+print(f"  labels:          {labels.shape}")
+print(f"  valid_mask:      {valid_mask.shape}")
+
+D = values.shape[2]
+S = static_features.shape[1]
+model = GRUD(input_size=D, static_size=S, hidden_size=64, dropout=0.0)
+logits = model(values, mask, delta, static_features)
+print(f"  logits:          {logits.shape}")
+
+# Quick gradient check
+loss = (logits * valid_mask).sum()
+loss.backward()
+grad_norm = sum(p.grad.norm().item() for p in model.param

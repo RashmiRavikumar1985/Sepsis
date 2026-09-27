@@ -1,0 +1,12 @@
+{
+    "graph_id": "A",
+    "description": "|\u03c1| >= 0.20 \u2014 current baseline (Spearman)",
+    "n_nodes": 35,
+    "n_edges_unique": 78,
+    "n_edges_total": 156,
+    "weight_mean": 0.35021932043904475,
+    "weight_min": 0.2024726563549814,
+    "weight_max": 0.9567289795542054,
+    "n_clinical_edges": 21,
+    "n_statistical_edges": 57
+}

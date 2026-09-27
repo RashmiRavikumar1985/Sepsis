@@ -1,0 +1,1614 @@
+{
+    "nodes": [
+        {
+            "node_id": 0,
+            "feature_name": "HR"
+        },
+        {
+            "node_id": 1,
+            "feature_name": "O2Sat"
+        },
+        {
+            "node_id": 2,
+            "feature_name": "Temp"
+        },
+        {
+            "node_id": 3,
+            "feature_name": "SBP"
+        },
+        {
+            "node_id": 4,
+            "feature_name": "MAP"
+        },
+        {
+            "node_id": 5,
+            "feature_name": "DBP"
+        },
+        {
+            "node_id": 6,
+            "feature_name": "Resp"
+        },
+        {
+            "node_id": 7,
+            "feature_name": "BaseExcess"
+        },
+        {
+            "node_id": 8,
+            "feature_name": "HCO3"
+        },
+        {
+            "node_id": 9,
+            "feature_name": "FiO2"
+        },
+        {
+            "node_id": 10,
+            "feature_name": "pH"
+        },
+        {
+            "node_id": 11,
+            "feature_name": "PaCO2"
+        },
+        {
+            "node_id": 12,
+            "feature_name": "SaO2"
+        },
+        {
+            "node_id": 13,
+            "feature_name": "AST"
+        },
+        {
+            "node_id": 14,
+            "feature_name": "BUN"
+        },
+        {
+            "node_id": 15,
+            "feature_name": "Alkalinephos"
+        },
+        {
+            "node_id": 16,
+            "feature_name": "Calcium"
+        },
+        {
+            "node_id": 17,
+            "feature_name": "Chloride"
+        },
+        {
+            "node_id": 18,
+            "feature_name": "Creatinine"
+        },
+        {
+            "node_id": 19,
+            "feature_name": "Bilirubin_direct"
+        },
+        {
+            "node_id": 20,
+            "feature_name": "Glucose"
+        },
+        {
+            "node_id": 21,
+            "feature_name": "Lactate"
+        },
+        {
+            "node_id": 22,
+            "feature_name": "Magnesium"
+        },
+        {
+            "node_id": 23,
+            "feature_name": "Phosphate"
+        },
+        {
+            "node_id": 24,
+            "feature_name": "Potassium"
+        },
+        {
+            "node_id": 25,
+            "feature_name": "Bilirubin_total"
+        },
+        {
+            "node_id": 26,
+            "feature_name": "TroponinI"
+        },
+        {
+            "node_id": 27,
+            "feature_name": "Hct"
+        },
+        {
+            "node_id": 28,
+            "feature_name": "Hgb"
+        },
+        {
+            "node_id": 29,
+            "feature_name": "PTT"
+        },
+        {
+            "node_id": 30,
+            "feature_name": "WBC"
+        },
+        {
+            "node_id": 31,
+            "feature_name": "Fibrinogen"
+        },
+        {
+            "node_id": 32,
+            "feature_name": "Platelets"
+        },
+        {
+            "node_id": 33,
+            "feature_name": "EtCO2"
+        },
+        {
+            "node_id": 34,
+            "feature_name": "ICULOS"
+        }
+    ],
+    "edges": [
+        {
+            "source": 0,
+            "target": 2,
+            "weight": 0.25141487906640897,
+            "type": "correlation"
+        },
+        {
+            "source": 2,
+            "target": 0,
+            "weight": 0.25141487906640897,
+            "type": "correlation"
+        },
+        {
+            "source": 0,
+            "target": 6,
+            "weight": 0.22873076798755998,
+            "type": "correlation"
+        },
+        {
+            "source": 6,
+            "target": 0,
+            "weight": 0.22873076798755998,
+            "type": "correlation"
+        },
+        {
+            "source": 1,
+            "target": 9,
+            "weight": 0.25612915758306115,
+            "type": "correlation"
+        },
+        {
+            "source": 9,
+            "target": 1,
+            "weight": 0.25612915758306115,
+            "type": "correlation"
+        },
+        {
+            "source": 1,
+            "target": 17,
+            "weight": 0.21163741160860822,
+            "type": "correlation"
+        },
+        {
+            "source": 17,
+            "target": 1,
+            "weight": 0.21163741160860822,
+            "type": "correlation"
+        },
+        {
+            "source": 2,
+            "target": 7,
+            "weight": 0.2285791446936446,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 2,
+            "weight": 0.2285791446936446,
+            "type": "correlation"
+        },
+        {
+            "source": 2,
+            "target": 10,
+            "weight": 0.2775152048694085,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 2,
+            "weight": 0.2775152048694085,
+            "type": "correlation"
+        },
+        {
+            "source": 2,
+            "target": 13,
+            "weight": 0.22669234235166688,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 2,
+            "weight": 0.22669234235166688,
+            "type": "correlation"
+        },
+        {
+            "source": 2,
+            "target": 17,
+            "weight": 0.2101617112495817,
+            "type": "correlation"
+        },
+        {
+            "source": 17,
+            "target": 2,
+            "weight": 0.2101617112495817,
+            "type": "correlation"
+        },
+        {
+            "source": 2,
+            "target": 19,
+            "weight": 0.25512369501983057,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 2,
+            "weight": 0.25512369501983057,
+            "type": "correlation"
+        },
+        {
+            "source": 2,
+            "target": 21,
+            "weight": 0.24476588629150603,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 2,
+            "weight": 0.24476588629150603,
+            "type": "correlation"
+        },
+        {
+            "source": 2,
+            "target": 31,
+            "weight": 0.41485326948340234,
+            "type": "correlation"
+        },
+        {
+            "source": 31,
+            "target": 2,
+            "weight": 0.41485326948340234,
+            "type": "correlation"
+        },
+        {
+            "source": 2,
+            "target": 33,
+            "weight": 0.32885108381127376,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 2,
+            "weight": 0.32885108381127376,
+            "type": "correlation"
+        },
+        {
+            "source": 3,
+            "target": 4,
+            "weight": 0.7745525210458523,
+            "type": "correlation"
+        },
+        {
+            "source": 4,
+            "target": 3,
+            "weight": 0.7745525210458523,
+            "type": "correlation"
+        },
+        {
+            "source": 3,
+            "target": 5,
+            "weight": 0.5209425507418444,
+            "type": "correlation"
+        },
+        {
+            "source": 5,
+            "target": 3,
+            "weight": 0.5209425507418444,
+            "type": "correlation"
+        },
+        {
+            "source": 3,
+            "target": 7,
+            "weight": 0.20029133010670538,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 3,
+            "weight": 0.20029133010670538,
+            "type": "correlation"
+        },
+        {
+            "source": 4,
+            "target": 5,
+            "weight": 0.839225758348521,
+            "type": "correlation"
+        },
+        {
+            "source": 5,
+            "target": 4,
+            "weight": 0.839225758348521,
+            "type": "correlation"
+        },
+        {
+            "source": 4,
+            "target": 19,
+            "weight": 0.22973010307763217,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 4,
+            "weight": 0.22973010307763217,
+            "type": "correlation"
+        },
+        {
+            "source": 5,
+            "target": 19,
+            "weight": 0.45477985510141855,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 5,
+            "weight": 0.45477985510141855,
+            "type": "correlation"
+        },
+        {
+            "source": 5,
+            "target": 27,
+            "weight": 0.2031637100825397,
+            "type": "correlation"
+        },
+        {
+            "source": 27,
+            "target": 5,
+            "weight": 0.2031637100825397,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 8,
+            "weight": 0.870753093614247,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 7,
+            "weight": 0.870753093614247,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 10,
+            "weight": 0.677170487924692,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 7,
+            "weight": 0.677170487924692,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 11,
+            "weight": 0.33011010294426946,
+            "type": "correlation"
+        },
+        {
+            "source": 11,
+            "target": 7,
+            "weight": 0.33011010294426946,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 13,
+            "weight": 0.2305196081812123,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 7,
+            "weight": 0.2305196081812123,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 17,
+            "weight": 0.36952159212065777,
+            "type": "correlation"
+        },
+        {
+            "source": 17,
+            "target": 7,
+            "weight": 0.36952159212065777,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 18,
+            "weight": 0.24290182722671225,
+            "type": "correlation"
+        },
+        {
+            "source": 18,
+            "target": 7,
+            "weight": 0.24290182722671225,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 19,
+            "weight": 0.5718642663462948,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 7,
+            "weight": 0.5718642663462948,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 21,
+            "weight": 0.48216187520013143,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 7,
+            "weight": 0.48216187520013143,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 23,
+            "weight": 0.37267955294229627,
+            "type": "correlation"
+        },
+        {
+            "source": 23,
+            "target": 7,
+            "weight": 0.37267955294229627,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 24,
+            "weight": 0.2452210606759434,
+            "type": "correlation"
+        },
+        {
+            "source": 24,
+            "target": 7,
+            "weight": 0.2452210606759434,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 29,
+            "weight": 0.3233484605714449,
+            "type": "correlation"
+        },
+        {
+            "source": 29,
+            "target": 7,
+            "weight": 0.3233484605714449,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 30,
+            "weight": 0.23342791991339534,
+            "type": "correlation"
+        },
+        {
+            "source": 30,
+            "target": 7,
+            "weight": 0.23342791991339534,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 32,
+            "weight": 0.2691705683759824,
+            "type": "correlation"
+        },
+        {
+            "source": 32,
+            "target": 7,
+            "weight": 0.2691705683759824,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 33,
+            "weight": 0.4627484668976909,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 7,
+            "weight": 0.4627484668976909,
+            "type": "correlation"
+        },
+        {
+            "source": 7,
+            "target": 34,
+            "weight": 0.2631981799987906,
+            "type": "correlation"
+        },
+        {
+            "source": 34,
+            "target": 7,
+            "weight": 0.2631981799987906,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 10,
+            "weight": 0.4046032041554036,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 8,
+            "weight": 0.4046032041554036,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 11,
+            "weight": 0.529061712856315,
+            "type": "correlation"
+        },
+        {
+            "source": 11,
+            "target": 8,
+            "weight": 0.529061712856315,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 13,
+            "weight": 0.3324401542676792,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 8,
+            "weight": 0.3324401542676792,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 17,
+            "weight": 0.4124497564741274,
+            "type": "correlation"
+        },
+        {
+            "source": 17,
+            "target": 8,
+            "weight": 0.4124497564741274,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 21,
+            "weight": 0.43235423979303234,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 8,
+            "weight": 0.43235423979303234,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 25,
+            "weight": 0.3027798001323493,
+            "type": "correlation"
+        },
+        {
+            "source": 25,
+            "target": 8,
+            "weight": 0.3027798001323493,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 26,
+            "weight": 0.35408392834295666,
+            "type": "correlation"
+        },
+        {
+            "source": 26,
+            "target": 8,
+            "weight": 0.35408392834295666,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 29,
+            "weight": 0.25046769118604184,
+            "type": "correlation"
+        },
+        {
+            "source": 29,
+            "target": 8,
+            "weight": 0.25046769118604184,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 30,
+            "weight": 0.22288683641125698,
+            "type": "correlation"
+        },
+        {
+            "source": 30,
+            "target": 8,
+            "weight": 0.22288683641125698,
+            "type": "correlation"
+        },
+        {
+            "source": 8,
+            "target": 34,
+            "weight": 0.22660660041585623,
+            "type": "correlation"
+        },
+        {
+            "source": 34,
+            "target": 8,
+            "weight": 0.22660660041585623,
+            "type": "correlation"
+        },
+        {
+            "source": 9,
+            "target": 10,
+            "weight": 0.20114131414064831,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 9,
+            "weight": 0.20114131414064831,
+            "type": "correlation"
+        },
+        {
+            "source": 9,
+            "target": 13,
+            "weight": 0.21382972417736013,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 9,
+            "weight": 0.21382972417736013,
+            "type": "correlation"
+        },
+        {
+            "source": 9,
+            "target": 19,
+            "weight": 0.6699098899473476,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 9,
+            "weight": 0.6699098899473476,
+            "type": "correlation"
+        },
+        {
+            "source": 9,
+            "target": 21,
+            "weight": 0.31893886458615595,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 9,
+            "weight": 0.31893886458615595,
+            "type": "correlation"
+        },
+        {
+            "source": 9,
+            "target": 26,
+            "weight": 0.42121182147504316,
+            "type": "correlation"
+        },
+        {
+            "source": 26,
+            "target": 9,
+            "weight": 0.42121182147504316,
+            "type": "correlation"
+        },
+        {
+            "source": 9,
+            "target": 31,
+            "weight": 0.32569577975383773,
+            "type": "correlation"
+        },
+        {
+            "source": 31,
+            "target": 9,
+            "weight": 0.32569577975383773,
+            "type": "correlation"
+        },
+        {
+            "source": 9,
+            "target": 33,
+            "weight": 0.22895918987727362,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 9,
+            "weight": 0.22895918987727362,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 11,
+            "weight": 0.39874956305805126,
+            "type": "correlation"
+        },
+        {
+            "source": 11,
+            "target": 10,
+            "weight": 0.39874956305805126,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 18,
+            "weight": 0.23933260877109022,
+            "type": "correlation"
+        },
+        {
+            "source": 18,
+            "target": 10,
+            "weight": 0.23933260877109022,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 19,
+            "weight": 0.3633572153978015,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 10,
+            "weight": 0.3633572153978015,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 20,
+            "weight": 0.2066802096579402,
+            "type": "correlation"
+        },
+        {
+            "source": 20,
+            "target": 10,
+            "weight": 0.2066802096579402,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 21,
+            "weight": 0.4575116879837668,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 10,
+            "weight": 0.4575116879837668,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 23,
+            "weight": 0.4911805288698599,
+            "type": "correlation"
+        },
+        {
+            "source": 23,
+            "target": 10,
+            "weight": 0.4911805288698599,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 24,
+            "weight": 0.2943325893531366,
+            "type": "correlation"
+        },
+        {
+            "source": 24,
+            "target": 10,
+            "weight": 0.2943325893531366,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 29,
+            "weight": 0.25393813842614765,
+            "type": "correlation"
+        },
+        {
+            "source": 29,
+            "target": 10,
+            "weight": 0.25393813842614765,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 31,
+            "weight": 0.3037721170031947,
+            "type": "correlation"
+        },
+        {
+            "source": 31,
+            "target": 10,
+            "weight": 0.3037721170031947,
+            "type": "correlation"
+        },
+        {
+            "source": 10,
+            "target": 34,
+            "weight": 0.22580280827380214,
+            "type": "correlation"
+        },
+        {
+            "source": 34,
+            "target": 10,
+            "weight": 0.22580280827380214,
+            "type": "correlation"
+        },
+        {
+            "source": 11,
+            "target": 17,
+            "weight": 0.20095154656192923,
+            "type": "correlation"
+        },
+        {
+            "source": 17,
+            "target": 11,
+            "weight": 0.20095154656192923,
+            "type": "correlation"
+        },
+        {
+            "source": 11,
+            "target": 19,
+            "weight": 0.2617248766339827,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 11,
+            "weight": 0.2617248766339827,
+            "type": "correlation"
+        },
+        {
+            "source": 11,
+            "target": 23,
+            "weight": 0.24720002582033898,
+            "type": "correlation"
+        },
+        {
+            "source": 23,
+            "target": 11,
+            "weight": 0.24720002582033898,
+            "type": "correlation"
+        },
+        {
+            "source": 11,
+            "target": 31,
+            "weight": 0.3908083812309993,
+            "type": "correlation"
+        },
+        {
+            "source": 31,
+            "target": 11,
+            "weight": 0.3908083812309993,
+            "type": "correlation"
+        },
+        {
+            "source": 11,
+            "target": 33,
+            "weight": 0.5300895698098373,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 11,
+            "weight": 0.5300895698098373,
+            "type": "correlation"
+        },
+        {
+            "source": 12,
+            "target": 15,
+            "weight": 0.4050906420115785,
+            "type": "correlation"
+        },
+        {
+            "source": 15,
+            "target": 12,
+            "weight": 0.4050906420115785,
+            "type": "correlation"
+        },
+        {
+            "source": 12,
+            "target": 16,
+            "weight": 0.2111294695605122,
+            "type": "correlation"
+        },
+        {
+            "source": 16,
+            "target": 12,
+            "weight": 0.2111294695605122,
+            "type": "correlation"
+        },
+        {
+            "source": 12,
+            "target": 19,
+            "weight": 0.9380261794370495,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 12,
+            "weight": 0.9380261794370495,
+            "type": "correlation"
+        },
+        {
+            "source": 12,
+            "target": 26,
+            "weight": 0.532419846037691,
+            "type": "correlation"
+        },
+        {
+            "source": 26,
+            "target": 12,
+            "weight": 0.532419846037691,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 15,
+            "weight": 0.3525528173196098,
+            "type": "correlation"
+        },
+        {
+            "source": 15,
+            "target": 13,
+            "weight": 0.3525528173196098,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 19,
+            "weight": 0.4267382861461652,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 13,
+            "weight": 0.4267382861461652,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 20,
+            "weight": 0.20435280469264877,
+            "type": "correlation"
+        },
+        {
+            "source": 20,
+            "target": 13,
+            "weight": 0.20435280469264877,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 21,
+            "weight": 0.6866643327500048,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 13,
+            "weight": 0.6866643327500048,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 23,
+            "weight": 0.2920324703393108,
+            "type": "correlation"
+        },
+        {
+            "source": 23,
+            "target": 13,
+            "weight": 0.2920324703393108,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 25,
+            "weight": 0.35744678615048475,
+            "type": "correlation"
+        },
+        {
+            "source": 25,
+            "target": 13,
+            "weight": 0.35744678615048475,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 29,
+            "weight": 0.38604815656057423,
+            "type": "correlation"
+        },
+        {
+            "source": 29,
+            "target": 13,
+            "weight": 0.38604815656057423,
+            "type": "correlation"
+        },
+        {
+            "source": 13,
+            "target": 30,
+            "weight": 0.5488749507460726,
+            "type": "correlation"
+        },
+        {
+            "source": 30,
+            "target": 13,
+            "weight": 0.5488749507460726,
+            "type": "correlation"
+        },
+        {
+            "source": 14,
+            "target": 18,
+            "weight": 0.6406334014621001,
+            "type": "correlation"
+        },
+        {
+            "source": 18,
+            "target": 14,
+            "weight": 0.6406334014621001,
+            "type": "correlation"
+        },
+        {
+            "source": 14,
+            "target": 22,
+            "weight": 0.20569027268832052,
+            "type": "correlation"
+        },
+        {
+            "source": 22,
+            "target": 14,
+            "weight": 0.20569027268832052,
+            "type": "correlation"
+        },
+        {
+            "source": 14,
+            "target": 23,
+            "weight": 0.4998142714170635,
+            "type": "correlation"
+        },
+        {
+            "source": 23,
+            "target": 14,
+            "weight": 0.4998142714170635,
+            "type": "correlation"
+        },
+        {
+            "source": 14,
+            "target": 24,
+            "weight": 0.23319366801625846,
+            "type": "correlation"
+        },
+        {
+            "source": 24,
+            "target": 14,
+            "weight": 0.23319366801625846,
+            "type": "correlation"
+        },
+        {
+            "source": 14,
+            "target": 31,
+            "weight": 0.2435963148379202,
+            "type": "correlation"
+        },
+        {
+            "source": 31,
+            "target": 14,
+            "weight": 0.2435963148379202,
+            "type": "correlation"
+        },
+        {
+            "source": 14,
+            "target": 33,
+            "weight": 0.21438340219551277,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 14,
+            "weight": 0.21438340219551277,
+            "type": "correlation"
+        },
+        {
+            "source": 15,
+            "target": 17,
+            "weight": 0.24540434082464802,
+            "type": "correlation"
+        },
+        {
+            "source": 17,
+            "target": 15,
+            "weight": 0.24540434082464802,
+            "type": "correlation"
+        },
+        {
+            "source": 15,
+            "target": 25,
+            "weight": 0.23952925882343065,
+            "type": "correlation"
+        },
+        {
+            "source": 25,
+            "target": 15,
+            "weight": 0.23952925882343065,
+            "type": "correlation"
+        },
+        {
+            "source": 15,
+            "target": 29,
+            "weight": 0.35189093914291947,
+            "type": "correlation"
+        },
+        {
+            "source": 29,
+            "target": 15,
+            "weight": 0.35189093914291947,
+            "type": "correlation"
+        },
+        {
+            "source": 15,
+            "target": 30,
+            "weight": 0.37745144560311344,
+            "type": "correlation"
+        },
+        {
+            "source": 30,
+            "target": 15,
+            "weight": 0.37745144560311344,
+            "type": "correlation"
+        },
+        {
+            "source": 15,
+            "target": 33,
+            "weight": 0.3754048717303461,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 15,
+            "weight": 0.3754048717303461,
+            "type": "correlation"
+        },
+        {
+            "source": 16,
+            "target": 27,
+            "weight": 0.24973968247686043,
+            "type": "correlation"
+        },
+        {
+            "source": 27,
+            "target": 16,
+            "weight": 0.24973968247686043,
+            "type": "correlation"
+        },
+        {
+            "source": 16,
+            "target": 28,
+            "weight": 0.2365170629557665,
+            "type": "correlation"
+        },
+        {
+            "source": 28,
+            "target": 16,
+            "weight": 0.2365170629557665,
+            "type": "correlation"
+        },
+        {
+            "source": 17,
+            "target": 19,
+            "weight": 0.5197340048650484,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 17,
+            "weight": 0.5197340048650484,
+            "type": "correlation"
+        },
+        {
+            "source": 17,
+            "target": 25,
+            "weight": 0.20738223003737707,
+            "type": "correlation"
+        },
+        {
+            "source": 25,
+            "target": 17,
+            "weight": 0.20738223003737707,
+            "type": "correlation"
+        },
+        {
+            "source": 17,
+            "target": 26,
+            "weight": 0.35125551717448683,
+            "type": "correlation"
+        },
+        {
+            "source": 26,
+            "target": 17,
+            "weight": 0.35125551717448683,
+            "type": "correlation"
+        },
+        {
+            "source": 17,
+            "target": 33,
+            "weight": 0.23399786481431853,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 17,
+            "weight": 0.23399786481431853,
+            "type": "correlation"
+        },
+        {
+            "source": 18,
+            "target": 23,
+            "weight": 0.5247328120336914,
+            "type": "correlation"
+        },
+        {
+            "source": 23,
+            "target": 18,
+            "weight": 0.5247328120336914,
+            "type": "correlation"
+        },
+        {
+            "source": 18,
+            "target": 24,
+            "weight": 0.2757117998407764,
+            "type": "correlation"
+        },
+        {
+            "source": 24,
+            "target": 18,
+            "weight": 0.2757117998407764,
+            "type": "correlation"
+        },
+        {
+            "source": 18,
+            "target": 31,
+            "weight": 0.33918442583521086,
+            "type": "correlation"
+        },
+        {
+            "source": 31,
+            "target": 18,
+            "weight": 0.33918442583521086,
+            "type": "correlation"
+        },
+        {
+            "source": 18,
+            "target": 33,
+            "weight": 0.2225018559147836,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 18,
+            "weight": 0.2225018559147836,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 21,
+            "weight": 0.38150885667818957,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 19,
+            "weight": 0.38150885667818957,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 23,
+            "weight": 0.2339232634394179,
+            "type": "correlation"
+        },
+        {
+            "source": 23,
+            "target": 19,
+            "weight": 0.2339232634394179,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 25,
+            "weight": 0.9923873126606454,
+            "type": "correlation"
+        },
+        {
+            "source": 25,
+            "target": 19,
+            "weight": 0.9923873126606454,
+            "type": "correlation"
+        },
+        {
+            "source": 19,
+            "target": 31,
+            "weight": 0.4141166784171369,
+            "type": "correlation"
+        },
+        {
+            "source": 31,
+            "target": 19,
+            "weight": 0.4141166784171369,
+            "type": "correlation"
+        },
+        {
+            "source": 20,
+            "target": 21,
+            "weight": 0.38537696253283105,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 20,
+            "weight": 0.38537696253283105,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 23,
+            "weight": 0.44986273038415453,
+            "type": "correlation"
+        },
+        {
+            "source": 23,
+            "target": 21,
+            "weight": 0.44986273038415453,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 25,
+            "weight": 0.2314907513126761,
+            "type": "correlation"
+        },
+        {
+            "source": 25,
+            "target": 21,
+            "weight": 0.2314907513126761,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 29,
+            "weight": 0.49671873905759595,
+            "type": "correlation"
+        },
+        {
+            "source": 29,
+            "target": 21,
+            "weight": 0.49671873905759595,
+            "type": "correlation"
+        },
+        {
+            "source": 21,
+            "target": 33,
+            "weight": 0.39931660987328954,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 21,
+            "weight": 0.39931660987328954,
+            "type": "correlation"
+        },
+        {
+            "source": 22,
+            "target": 33,
+            "weight": 0.20662247755462376,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 22,
+            "weight": 0.20662247755462376,
+            "type": "correlation"
+        },
+        {
+            "source": 23,
+            "target": 24,
+            "weight": 0.3877930992934964,
+            "type": "correlation"
+        },
+        {
+            "source": 24,
+            "target": 23,
+            "weight": 0.3877930992934964,
+            "type": "correlation"
+        },
+        {
+            "source": 23,
+            "target": 29,
+            "weight": 0.2228013820173467,
+            "type": "correlation"
+        },
+        {
+            "source": 29,
+            "target": 23,
+            "weight": 0.2228013820173467,
+            "type": "correlation"
+        },
+        {
+            "source": 25,
+            "target": 29,
+            "weight": 0.2841383509397711,
+            "type": "correlation"
+        },
+        {
+            "source": 29,
+            "target": 25,
+            "weight": 0.2841383509397711,
+            "type": "correlation"
+        },
+        {
+            "source": 25,
+            "target": 30,
+            "weight": 0.322077794410671,
+            "type": "correlation"
+        },
+        {
+            "source": 30,
+            "target": 25,
+            "weight": 0.322077794410671,
+            "type": "correlation"
+        },
+        {
+            "source": 25,
+            "target": 31,
+            "weight": 0.2421034571475876,
+            "type": "correlation"
+        },
+        {
+            "source": 31,
+            "target": 25,
+            "weight": 0.2421034571475876,
+            "type": "correlation"
+        },
+        {
+            "source": 25,
+            "target": 33,
+            "weight": 0.33525005877360586,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 25,
+            "weight": 0.33525005877360586,
+            "type": "correlation"
+        },
+        {
+            "source": 26,
+            "target": 28,
+            "weight": 0.23323741041731205,
+            "type": "correlation"
+        },
+        {
+            "source": 28,
+            "target": 26,
+            "weight": 0.23323741041731205,
+            "type": "correlation"
+        },
+        {
+            "source": 26,
+            "target": 30,
+            "weight": 0.23914330905895745,
+            "type": "correlation"
+        },
+        {
+            "source": 30,
+            "target": 26,
+            "weight": 0.23914330905895745,
+            "type": "correlation"
+        },
+        {
+            "source": 27,
+            "target": 28,
+            "weight": 0.9493444407034052,
+            "type": "correlation"
+        },
+        {
+            "source": 28,
+            "target": 27,
+            "weight": 0.9493444407034052,
+            "type": "correlation"
+        },
+        {
+            "source": 27,
+            "target": 33,
+            "weight": 0.25157027555978995,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 27,
+            "weight": 0.25157027555978995,
+            "type": "correlation"
+        },
+        {
+            "source": 28,
+            "target": 33,
+            "weight": 0.2588987911279889,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 28,
+            "weight": 0.2588987911279889,
+            "type": "correlation"
+        },
+        {
+            "source": 29,
+            "target": 33,
+            "weight": 0.3088967652718308,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 29,
+            "weight": 0.3088967652718308,
+            "type": "correlation"
+        },
+        {
+            "source": 31,
+            "target": 33,
+            "weight": 0.410302111974231,
+            "type": "correlation"
+        },
+        {
+            "source": 33,
+            "target": 31,
+            "weight": 0.410302111974231,
+            "type": "correlation"
+        }
+    ],
+    "metadata": {
+        "description": "Provisional Clinical Feature Interaction Graph based on Pearson correlation threshold > 0.2",
+        "edge_count": 244
+    }
+}
